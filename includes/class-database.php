@@ -3,10 +3,10 @@
  * KDM_Database
  *
  * All database interactions for the plugin.
- * Schema version: 1.1  (adds area_name_en, governorate_name_en, delivery_notes_en)
+ * Schema version: 2.0  (two tables: kdm_delivery_cities + kdm_delivery_areas with JSON columns)
  *
  * @package KuwaitDeliveryManager
- * @since   1.0.0
+ * @since   1.3.0
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -14,344 +14,413 @@ defined( 'ABSPATH' ) || exit;
 class KDM_Database {
 
 	// ---------------------------------------------------------------------------
-	// Schema
+	// Table Names
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * Returns the fully-qualified table name including the WP prefix.
-	 *
 	 * @return string
 	 */
-	public static function get_table_name() {
+	public static function get_cities_table_name(): string {
+		global $wpdb;
+		return $wpdb->prefix . 'kdm_delivery_cities';
+	}
+
+	/**
+	 * @return string
+	 */
+	public static function get_areas_table_name(): string {
 		global $wpdb;
 		return $wpdb->prefix . 'kdm_delivery_areas';
 	}
 
+	// ---------------------------------------------------------------------------
+	// Schema
+	// ---------------------------------------------------------------------------
+
 	/**
-	 * Creates or upgrades the delivery areas table using dbDelta.
-	 * Safe to call multiple times — dbDelta only applies missing changes.
-	 *
-	 * Schema changes since v1.0:
-	 *   v1.1: added area_name_en, governorate_name_en, delivery_notes_en
+	 * Creates or upgrades both delivery tables using dbDelta.
 	 */
-	public static function create_table() {
+	public static function create_tables(): void {
 		global $wpdb;
 
-		$table   = self::get_table_name();
 		$collate = $wpdb->get_charset_collate();
 
-		// NOTE: dbDelta requires exactly two spaces before PRIMARY KEY.
-		$sql = "CREATE TABLE {$table} (
-  id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
-  governorate_key varchar(50) NOT NULL DEFAULT '',
-  governorate_name_ar varchar(100) NOT NULL DEFAULT '',
-  governorate_name_en varchar(100) NOT NULL DEFAULT '',
-  area_name_ar varchar(150) NOT NULL DEFAULT '',
-  area_name_en varchar(150) NOT NULL DEFAULT '',
-  delivery_price decimal(10,3) NOT NULL DEFAULT 0.000,
-  express_fee decimal(10,3) NOT NULL DEFAULT 0.000,
-  delivery_notes text DEFAULT NULL,
-  delivery_notes_en text DEFAULT NULL,
-  minimum_order decimal(10,3) NOT NULL DEFAULT 0.000,
-  is_enabled tinyint(1) NOT NULL DEFAULT 1,
-  sort_order int(11) NOT NULL DEFAULT 0,
+		$cities_table = self::get_cities_table_name();
+		$areas_table  = self::get_areas_table_name();
+
+		$sql_cities = "CREATE TABLE {$cities_table} (
+  city_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  country_iso2 varchar(2) NOT NULL DEFAULT '',
+  city_name longtext NOT NULL,
+  is_active tinyint(1) NOT NULL DEFAULT 1,
+  sorting int(11) NOT NULL DEFAULT 0,
   created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY  (id),
-  KEY governorate_key (governorate_key),
-  KEY is_enabled (is_enabled),
-  KEY sort_order (sort_order)
+  PRIMARY KEY  (city_id),
+  KEY country_active_sort (country_iso2, is_active, sorting)
+) {$collate};";
+
+		$sql_areas = "CREATE TABLE {$areas_table} (
+  area_id bigint(20) unsigned NOT NULL AUTO_INCREMENT,
+  city_id bigint(20) unsigned NOT NULL,
+  area_name longtext NOT NULL,
+  is_active tinyint(1) NOT NULL DEFAULT 1,
+  sorting int(11) NOT NULL DEFAULT 0,
+  delivery_price decimal(10,3) NOT NULL DEFAULT 0.000,
+  express_fee decimal(10,3) NOT NULL DEFAULT 0.000,
+  delivery_notes longtext DEFAULT NULL,
+  minimum_order decimal(10,3) NOT NULL DEFAULT 0.000,
+  created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY  (area_id),
+  KEY city_active_sort (city_id, is_active, sorting)
 ) {$collate};";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
-		dbDelta( $sql );
+		dbDelta( $sql_cities );
+		dbDelta( $sql_areas );
 	}
 
+	// ---------------------------------------------------------------------------
+	// Seed
+	// ---------------------------------------------------------------------------
+
 	/**
-	 * Inserts the default Kuwait governorates and areas (bilingual).
-	 * Skips silently if rows already exist — idempotent.
+	 * Inserts default Kuwait cities and areas.
+	 * Skips if cities already exist — idempotent.
 	 */
-	public static function seed_default_data() {
+	public static function seed_default_data(): void {
 		global $wpdb;
 
-		$table = self::get_table_name();
+		$cities_table = self::get_cities_table_name();
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		if ( (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" ) > 0 ) {
+		if ( (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$cities_table}" ) > 0 ) {
 			return;
 		}
 
-		// ----------------------------------------------------------------
-		// Seed structure: [ area_ar, area_en, price, express, min_order ]
-		// ----------------------------------------------------------------
+		$now = current_time( 'mysql' );
+
+		// Seed structure: city => [ name_ar, name_en, areas => [ [ar, en, price, express, min] ] ]
 		$data = array(
-			'capital' => array(
-				'ar' => 'العاصمة', 'en' => 'Kuwait Capital',
+			array(
+				'ar'    => "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xa7\xd8\xb5\xd9\x85\xd8\xa9",
+				'en'    => 'Kuwait Capital',
 				'areas' => array(
-					array( 'الكويت',      'Kuwait City',      1.500, 1.000, 0.000 ),
-					array( 'الشويخ',      'Shuwaikh',         1.500, 1.000, 0.000 ),
-					array( 'الداسمة',     'Dasma',            1.500, 1.000, 0.000 ),
-					array( 'القادسية',    'Qadisiya',         1.500, 1.000, 0.000 ),
-					array( 'الروضة',      'Rawda',            1.500, 1.000, 0.000 ),
-					array( 'الصالحية',    'Salehiya',         1.500, 1.000, 0.000 ),
-					array( 'السرة',       'Surra',            1.500, 1.000, 0.000 ),
-					array( 'النزهة',      'Nuzha',            1.500, 1.000, 0.000 ),
-					array( 'كيفان',       'Kaifan',           1.500, 1.000, 0.000 ),
-					array( 'الشامية',     'Shamiya',          1.500, 1.000, 0.000 ),
-					array( 'المرقاب',     'Mirqab',           1.500, 1.000, 0.000 ),
-					array( 'قرطبة',       'Qortuba',          1.500, 1.000, 0.000 ),
-					array( 'الفيحاء',     'Faiha',            1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x83\xd9\x88\xd9\x8a\xd8\xaa", 'Kuwait City', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb4\xd9\x88\xd9\x8a\xd8\xae", 'Shuwaikh', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xaf\xd8\xa7\xd8\xb3\xd9\x85\xd8\xa9", 'Dasma', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x82\xd8\xa7\xd8\xaf\xd8\xb3\xd9\x8a\xd8\xa9", 'Qadisiya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd9\x88\xd8\xb6\xd8\xa9", 'Rawda', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd8\xa7\xd9\x84\xd8\xad\xd9\x8a\xd8\xa9", 'Salehiya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb3\xd8\xb1\xd8\xa9", 'Surra', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x86\xd8\xb2\xd9\x87\xd8\xa9", 'Nuzha', 1.500, 1.000, 0.000 ),
+					array( "\xd9\x83\xd9\x8a\xd9\x81\xd8\xa7\xd9\x86", 'Kaifan', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb4\xd8\xa7\xd9\x85\xd9\x8a\xd8\xa9", 'Shamiya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x85\xd8\xb1\xd9\x82\xd8\xa7\xd8\xa8", 'Mirqab', 1.500, 1.000, 0.000 ),
+					array( "\xd9\x82\xd8\xb1\xd8\xb7\xd8\xa8\xd8\xa9", 'Qortuba', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd9\x8a\xd8\xad\xd8\xa7\xd8\xa1", 'Faiha', 1.500, 1.000, 0.000 ),
 				),
 			),
-			'hawalli' => array(
-				'ar' => 'حولي', 'en' => 'Hawalli',
+			array(
+				'ar'    => "\xd8\xad\xd9\x88\xd9\x84\xd9\x8a",
+				'en'    => 'Hawalli',
 				'areas' => array(
-					array( 'حولي',           'Hawalli',         1.500, 1.000, 0.000 ),
-					array( 'الرميثية',       'Rumaithiya',      1.500, 1.000, 0.000 ),
-					array( 'سلوى',           'Salwa',           1.500, 1.000, 0.000 ),
-					array( 'الشعب',          'Sha\'ab',         1.500, 1.000, 0.000 ),
-					array( 'بيان',           'Bayan',           1.750, 1.000, 0.000 ),
-					array( 'مشرف',           'Mishref',         1.500, 1.000, 0.000 ),
-					array( 'الجابرية',       'Jabriya',         1.500, 1.000, 0.000 ),
-					array( 'السالمية',       'Salmiya',         1.500, 1.000, 0.000 ),
-					array( 'الرأي',          'Ar-Rai',          1.500, 1.000, 0.000 ),
-					array( 'ميدان حولي',     'Hawalli Square',  1.500, 1.000, 0.000 ),
-					array( 'بيان الجنوبية',  'South Bayan',     1.750, 1.250, 0.000 ),
+					array( "\xd8\xad\xd9\x88\xd9\x84\xd9\x8a", 'Hawalli', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd9\x85\xd9\x8a\xd8\xab\xd9\x8a\xd8\xa9", 'Rumaithiya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xb3\xd9\x84\xd9\x88\xd9\x89", 'Salwa', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb4\xd8\xb9\xd8\xa8", 'Sha\'ab', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa8\xd9\x8a\xd8\xa7\xd9\x86", 'Bayan', 1.750, 1.000, 0.000 ),
+					array( "\xd9\x85\xd8\xb4\xd8\xb1\xd9\x81", 'Mishref', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xac\xd8\xa7\xd8\xa8\xd8\xb1\xd9\x8a\xd8\xa9", 'Jabriya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb3\xd8\xa7\xd9\x84\xd9\x85\xd9\x8a\xd8\xa9", 'Salmiya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd8\xa3\xd9\x8a", 'Ar-Rai', 1.500, 1.000, 0.000 ),
+					array( "\xd9\x85\xd9\x8a\xd8\xaf\xd8\xa7\xd9\x86 \xd8\xad\xd9\x88\xd9\x84\xd9\x8a", 'Hawalli Square', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa8\xd9\x8a\xd8\xa7\xd9\x86 \xd8\xa7\xd9\x84\xd8\xac\xd9\x86\xd9\x88\xd8\xa8\xd9\x8a\xd8\xa9", 'South Bayan', 1.750, 1.250, 0.000 ),
 				),
 			),
-			'farwaniya' => array(
-				'ar' => 'الفروانية', 'en' => 'Al-Farwaniyah',
+			array(
+				'ar'    => "\xd8\xa7\xd9\x84\xd9\x81\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86\xd9\x8a\xd8\xa9",
+				'en'    => 'Al-Farwaniyah',
 				'areas' => array(
-					array( 'الفروانية',    'Farwaniya',         1.500, 1.000, 0.000 ),
-					array( 'العارضية',     'Ardhiya',           1.500, 1.000, 0.000 ),
-					array( 'الرابية',      'Rabiya',            1.500, 1.000, 0.000 ),
-					array( 'خيطان',        'Khaitan',           1.500, 1.000, 0.000 ),
-					array( 'الرغة',        'Regai',             1.500, 1.000, 0.000 ),
-					array( 'أبو فطيرة',    'Abu Futaira',       1.750, 1.250, 0.000 ),
-					array( 'العمرية',      'Omairiya',          1.500, 1.000, 0.000 ),
-					array( 'الأندلس',      'Andalus',           1.500, 1.000, 0.000 ),
-					array( 'جليب الشيوخ',  'Jleeb Al-Shuyoukh', 1.750, 1.250, 0.000 ),
-					array( 'الضجيج',       'Dhajej',            2.000, 1.500, 0.000 ),
-					array( 'العباسية',     'Abbasiya',          1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86\xd9\x8a\xd8\xa9", 'Farwaniya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xa7\xd8\xb1\xd8\xb6\xd9\x8a\xd8\xa9", 'Ardhiya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd8\xa7\xd8\xa8\xd9\x8a\xd8\xa9", 'Rabiya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xae\xd9\x8a\xd8\xb7\xd8\xa7\xd9\x86", 'Khaitan', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd8\xba\xd8\xa9", 'Regai', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa3\xd8\xa8\xd9\x88 \xd9\x81\xd8\xb7\xd9\x8a\xd8\xb1\xd8\xa9", 'Abu Futaira', 1.750, 1.250, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd9\x85\xd8\xb1\xd9\x8a\xd8\xa9", 'Omairiya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xa3\xd9\x86\xd8\xaf\xd9\x84\xd8\xb3", 'Andalus', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xac\xd9\x84\xd9\x8a\xd8\xa8 \xd8\xa7\xd9\x84\xd8\xb4\xd9\x8a\xd9\x88\xd8\xae", 'Jleeb Al-Shuyoukh', 1.750, 1.250, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb6\xd8\xac\xd9\x8a\xd8\xac", 'Dhajej', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xa8\xd8\xa7\xd8\xb3\xd9\x8a\xd8\xa9", 'Abbasiya', 1.500, 1.000, 0.000 ),
 				),
 			),
-			'ahmadi' => array(
-				'ar' => 'الأحمدي', 'en' => 'Ahmadi',
+			array(
+				'ar'    => "\xd8\xa7\xd9\x84\xd8\xa3\xd8\xad\xd9\x85\xd8\xaf\xd9\x8a",
+				'en'    => 'Ahmadi',
 				'areas' => array(
-					array( 'الأحمدي',    'Ahmadi',        2.000, 1.500, 0.000 ),
-					array( 'أبو حليفة', 'Abu Halifa',    2.000, 1.500, 0.000 ),
-					array( 'الفنطاس',   'Fintaas',       2.000, 1.500, 0.000 ),
-					array( 'المهبولة',  'Mahboula',      2.000, 1.500, 0.000 ),
-					array( 'الصباحية',  'Sabahiya',      2.000, 1.500, 0.000 ),
-					array( 'العقيلة',   'Aqila',         2.250, 1.500, 0.000 ),
-					array( 'الرقعي',    'Ruqai',         2.250, 1.500, 0.000 ),
-					array( 'الفحيحيل',  'Fahaheel',      2.000, 1.500, 0.000 ),
-					array( 'المنقف',    'Mangaf',        2.000, 1.500, 0.000 ),
-					array( 'الوفرة',    'Wafra',         3.000, 2.000, 0.000 ),
-					array( 'الزور',     'Zour',          3.500, 2.500, 0.000 ),
-					array( 'الخيران',   'Khairan',       4.000, 3.000, 5.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xa3\xd8\xad\xd9\x85\xd8\xaf\xd9\x8a", 'Ahmadi', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa3\xd8\xa8\xd9\x88 \xd8\xad\xd9\x84\xd9\x8a\xd9\x81\xd8\xa9", 'Abu Halifa', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd9\x86\xd8\xb7\xd8\xa7\xd8\xb3", 'Fintaas', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x85\xd9\x87\xd8\xa8\xd9\x88\xd9\x84\xd8\xa9", 'Mahboula', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd8\xa8\xd8\xa7\xd8\xad\xd9\x8a\xd8\xa9", 'Sabahiya', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd9\x82\xd9\x8a\xd9\x84\xd8\xa9", 'Aqila', 2.250, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd9\x82\xd8\xb9\xd9\x8a", 'Ruqai', 2.250, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd8\xad\xd9\x8a\xd8\xad\xd9\x8a\xd9\x84", 'Fahaheel', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x85\xd9\x86\xd9\x82\xd9\x81", 'Mangaf', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x88\xd9\x81\xd8\xb1\xd8\xa9", 'Wafra', 3.000, 2.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb2\xd9\x88\xd8\xb1", 'Zour', 3.500, 2.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xae\xd9\x8a\xd8\xb1\xd8\xa7\xd9\x86", 'Khairan', 4.000, 3.000, 5.000 ),
 				),
 			),
-			'jahra' => array(
-				'ar' => 'الجهراء', 'en' => 'Al-Jahra',
+			array(
+				'ar'    => "\xd8\xa7\xd9\x84\xd8\xac\xd9\x87\xd8\xb1\xd8\xa7\xd8\xa1",
+				'en'    => 'Al-Jahra',
 				'areas' => array(
-					array( 'الجهراء',     'Jahra',          2.000, 1.500, 0.000 ),
-					array( 'العيون',      'Uyun',           2.000, 1.500, 0.000 ),
-					array( 'القصر',       'Qasr',           2.000, 1.500, 0.000 ),
-					array( 'السلبية',     'Sulaibiya',      2.250, 1.500, 0.000 ),
-					array( 'تيماء',       'Tayma',          2.500, 2.000, 0.000 ),
-					array( 'كاظمة',       'Kadhima',        2.500, 2.000, 0.000 ),
-					array( 'الواحة',      'Waha',           2.000, 1.500, 0.000 ),
-					array( 'النعيم',      'Naeem',          2.000, 1.500, 0.000 ),
-					array( 'القيروان',    'Qairawan',       2.000, 1.500, 0.000 ),
-					array( 'الصليبيخات', 'Sulaibikhat',    2.500, 2.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xac\xd9\x87\xd8\xb1\xd8\xa7\xd8\xa1", 'Jahra', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd9\x8a\xd9\x88\xd9\x86", 'Uyun', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x82\xd8\xb5\xd8\xb1", 'Qasr', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb3\xd9\x84\xd8\xa8\xd9\x8a\xd8\xa9", 'Sulaibiya', 2.250, 1.500, 0.000 ),
+					array( "\xd8\xaa\xd9\x8a\xd9\x85\xd8\xa7\xd8\xa1", 'Tayma', 2.500, 2.000, 0.000 ),
+					array( "\xd9\x83\xd8\xa7\xd8\xb8\xd9\x85\xd8\xa9", 'Kadhima', 2.500, 2.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x88\xd8\xa7\xd8\xad\xd8\xa9", 'Waha', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x86\xd8\xb9\xd9\x8a\xd9\x85", 'Naeem', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x82\xd9\x8a\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86", 'Qairawan', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd9\x84\xd9\x8a\xd8\xa8\xd9\x8a\xd8\xae\xd8\xa7\xd8\xaa", 'Sulaibikhat', 2.500, 2.000, 0.000 ),
 				),
 			),
-			'mubarak' => array(
-				'ar' => 'مبارك الكبير', 'en' => 'Mubarak Al-Kabeer',
+			array(
+				'ar'    => "\xd9\x85\xd8\xa8\xd8\xa7\xd8\xb1\xd9\x83 \xd8\xa7\xd9\x84\xd9\x83\xd8\xa8\xd9\x8a\xd8\xb1",
+				'en'    => 'Mubarak Al-Kabeer',
 				'areas' => array(
-					array( 'مبارك الكبير',  'Mubarak Al-Kabeer', 1.750, 1.250, 0.000 ),
-					array( 'أبو الحصانية', 'Abu Hasaniya',       1.750, 1.250, 0.000 ),
-					array( 'القصور',        'Qusor',             1.750, 1.250, 0.000 ),
-					array( 'صبحان',         'Subhan',            1.750, 1.250, 0.000 ),
-					array( 'الفنيطيس',      'Fintas',            1.750, 1.250, 0.000 ),
-					array( 'المسيلة',       'Masaeel',           2.000, 1.500, 0.000 ),
-					array( 'الصديق',        'Siddeeq',           1.750, 1.250, 0.000 ),
-					array( 'البيتاء',       'Baitah',            1.750, 1.250, 0.000 ),
+					array( "\xd9\x85\xd8\xa8\xd8\xa7\xd8\xb1\xd9\x83 \xd8\xa7\xd9\x84\xd9\x83\xd8\xa8\xd9\x8a\xd8\xb1", 'Mubarak Al-Kabeer', 1.750, 1.250, 0.000 ),
+					array( "\xd8\xa3\xd8\xa8\xd9\x88 \xd8\xa7\xd9\x84\xd8\xad\xd8\xb5\xd8\xa7\xd9\x86\xd9\x8a\xd8\xa9", 'Abu Hasaniya', 1.750, 1.250, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x82\xd8\xb5\xd9\x88\xd8\xb1", 'Qusor', 1.750, 1.250, 0.000 ),
+					array( "\xd8\xb5\xd8\xa8\xd8\xad\xd8\xa7\xd9\x86", 'Subhan', 1.750, 1.250, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd9\x86\xd9\x8a\xd8\xb7\xd9\x8a\xd8\xb3", 'Fintas', 1.750, 1.250, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x85\xd8\xb3\xd9\x8a\xd9\x84\xd8\xa9", 'Masaeel', 2.000, 1.500, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd8\xaf\xd9\x8a\xd9\x82", 'Siddeeq', 1.750, 1.250, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xa8\xd9\x8a\xd8\xaa\xd8\xa7\xd8\xa1", 'Baitah', 1.750, 1.250, 0.000 ),
 				),
 			),
 		);
 
-		$sort = 0;
-		$now  = current_time( 'mysql' );
+		$city_sort = 0;
+		foreach ( $data as $city_data ) {
+			$city_name = wp_json_encode(
+				array( 'en' => $city_data['en'], 'ar' => $city_data['ar'] ),
+				JSON_UNESCAPED_UNICODE
+			);
 
-		foreach ( $data as $gov_key => $gov ) {
-			foreach ( $gov['areas'] as $area ) {
+			$wpdb->insert(
+				$cities_table,
+				array(
+					'country_iso2' => 'KW',
+					'city_name'    => $city_name,
+					'is_active'    => 1,
+					'sorting'      => $city_sort++,
+					'created_at'   => $now,
+					'updated_at'   => $now,
+				),
+				array( '%s', '%s', '%d', '%d', '%s', '%s' )
+			);
+
+			$city_id = (int) $wpdb->insert_id;
+			if ( ! $city_id ) {
+				continue;
+			}
+
+			$areas_table = self::get_areas_table_name();
+			$area_sort   = 0;
+
+			foreach ( $city_data['areas'] as $area ) {
+				$area_name = wp_json_encode(
+					array( 'en' => $area[1], 'ar' => $area[0] ),
+					JSON_UNESCAPED_UNICODE
+				);
+
 				$wpdb->insert(
-					$table,
+					$areas_table,
 					array(
-						'governorate_key'     => $gov_key,
-						'governorate_name_ar' => $gov['ar'],
-						'governorate_name_en' => $gov['en'],
-						'area_name_ar'        => $area[0],
-						'area_name_en'        => $area[1],
-						'delivery_price'      => (float) $area[2],
-						'express_fee'         => (float) $area[3],
-						'delivery_notes'      => '',
-						'delivery_notes_en'   => '',
-						'minimum_order'       => (float) $area[4],
-						'is_enabled'          => 1,
-						'sort_order'          => $sort++,
-						'created_at'          => $now,
-						'updated_at'          => $now,
+						'city_id'        => $city_id,
+						'area_name'      => $area_name,
+						'is_active'      => 1,
+						'sorting'        => $area_sort++,
+						'delivery_price' => (float) $area[2],
+						'express_fee'    => (float) $area[3],
+						'delivery_notes' => null,
+						'minimum_order'  => (float) $area[4],
+						'created_at'     => $now,
+						'updated_at'     => $now,
 					),
-					array( '%s','%s','%s','%s','%s','%f','%f','%s','%s','%f','%d','%d','%s','%s' )
+					array( '%d', '%s', '%d', '%d', '%f', '%f', '%s', '%f', '%s', '%s' )
 				);
 			}
 		}
 	}
 
 	// ---------------------------------------------------------------------------
-	// Read
+	// City — Read
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * Fetches all delivery areas for a governorate, ordered by sort_order ASC.
+	 * Fetches all cities for a country (admin — includes inactive).
 	 *
-	 * @param string $gov_key
-	 * @return array<int, array<string, mixed>>
+	 * @param string $country_iso2
+	 * @return array
 	 */
-	public static function get_areas_by_governorate( $gov_key ) {
+	public static function get_all_cities_by_country( string $country_iso2 ): array {
 		global $wpdb;
-		$table = self::get_table_name();
+		$table = self::get_cities_table_name();
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT * FROM {$table} WHERE governorate_key = %s ORDER BY sort_order ASC, id ASC",
-				$gov_key
+				"SELECT * FROM {$table} WHERE country_iso2 = %s ORDER BY sorting ASC, city_id ASC",
+				sanitize_text_field( $country_iso2 )
 			),
 			ARRAY_A
 		);
 	}
 
 	/**
-	 * Fetches a single area row by ID.
+	 * Fetches active cities for a country.
 	 *
-	 * @param int $id
-	 * @return array<string, mixed>|null
+	 * @param string $country_iso2
+	 * @return array
 	 */
-	public static function get_area( $id ) {
+	public static function get_cities_by_country( string $country_iso2 ): array {
 		global $wpdb;
-		$table = self::get_table_name();
+		$table = self::get_cities_table_name();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE country_iso2 = %s AND is_active = 1 ORDER BY sorting ASC, city_id ASC",
+				sanitize_text_field( $country_iso2 )
+			),
+			ARRAY_A
+		);
+	}
+
+	/**
+	 * Fetches a single city by ID.
+	 *
+	 * @param int $city_id
+	 * @return array|null
+	 */
+	public static function get_city( int $city_id ): ?array {
+		global $wpdb;
+		$table = self::get_cities_table_name();
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		return $wpdb->get_row(
-			$wpdb->prepare( "SELECT * FROM {$table} WHERE id = %d", $id ),
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE city_id = %d", absint( $city_id ) ),
 			ARRAY_A
 		);
 	}
 
+	// ---------------------------------------------------------------------------
+	// City — Write
+	// ---------------------------------------------------------------------------
+
 	/**
-	 * Returns all enabled areas grouped by governorate key.
-	 * Used by the checkout combo dropdown pre-load — one query instead of N per-gov calls.
+	 * Inserts a new city. Auto-assigns sorting = MAX + 1 for the country.
 	 *
-	 * @return array<string, array>  [ gov_key => [ area_row, ... ], ... ]
+	 * @param array $data
+	 * @return int|false
 	 */
-	public static function get_all_areas_grouped() {
+	public static function add_city( array $data ) {
 		global $wpdb;
-		$table = self::get_table_name();
+		$table = self::get_cities_table_name();
+
+		$country = sanitize_text_field( $data['country_iso2'] ?? '' );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$rows = $wpdb->get_results(
-			"SELECT * FROM {$table} WHERE is_enabled = 1 ORDER BY governorate_key, sort_order ASC, id ASC",
-			ARRAY_A
+		$max = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT MAX(sorting) FROM {$table} WHERE country_iso2 = %s",
+				$country
+			)
 		);
 
-		$grouped = array();
-		foreach ( $rows as $row ) {
-			$grouped[ $row['governorate_key'] ][] = $row;
-		}
-		return $grouped;
+		$now = current_time( 'mysql' );
+
+		$result = $wpdb->insert(
+			$table,
+			array(
+				'country_iso2' => $country,
+				'city_name'    => $data['city_name'],
+				'is_active'    => isset( $data['is_active'] ) ? absint( $data['is_active'] ) : 1,
+				'sorting'      => is_null( $max ) ? 0 : (int) $max + 1,
+				'created_at'   => $now,
+				'updated_at'   => $now,
+			),
+			array( '%s', '%s', '%d', '%d', '%s', '%s' )
+		);
+
+		return $result ? (int) $wpdb->insert_id : false;
 	}
 
-	// ---------------------------------------------------------------------------
-	// Write
-	// ---------------------------------------------------------------------------
-
 	/**
-	 * Updates an existing area row.
+	 * Updates an existing city.
 	 *
-	 * @param int   $id
-	 * @param array $data  Column => value pairs (already sanitised).
+	 * @param int   $city_id
+	 * @param array $data
 	 * @return bool
 	 */
-	public static function save_area( $id, array $data ) {
+	public static function save_city( int $city_id, array $data ): bool {
 		global $wpdb;
-		$table = self::get_table_name();
+		$table = self::get_cities_table_name();
 
 		$data['updated_at'] = current_time( 'mysql' );
 
 		return false !== $wpdb->update(
 			$table,
 			$data,
-			array( 'id' => $id ),
+			array( 'city_id' => absint( $city_id ) ),
 			null,
 			array( '%d' )
 		);
 	}
 
 	/**
-	 * Inserts a new area row.
-	 * Auto-assigns sort_order = MAX + 1 for the governorate.
+	 * Deletes a city and all its child areas (manual cascade).
 	 *
-	 * @param array $data
-	 * @return int|false  New row ID or false.
-	 */
-	public static function add_area( array $data ) {
-		global $wpdb;
-		$table = self::get_table_name();
-
-		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$max = $wpdb->get_var(
-			$wpdb->prepare(
-				"SELECT MAX(sort_order) FROM {$table} WHERE governorate_key = %s",
-				$data['governorate_key']
-			)
-		);
-
-		$data['sort_order'] = is_null( $max ) ? 0 : (int) $max + 1;
-		$data['created_at'] = current_time( 'mysql' );
-		$data['updated_at'] = current_time( 'mysql' );
-
-		return $wpdb->insert( $table, $data ) ? (int) $wpdb->insert_id : false;
-	}
-
-	/**
-	 * Deletes a single area by ID.
-	 *
-	 * @param int $id
+	 * @param int $city_id
 	 * @return bool
 	 */
-	public static function delete_area( $id ) {
+	public static function delete_city( int $city_id ): bool {
 		global $wpdb;
-		$table = self::get_table_name();
-		return false !== $wpdb->delete( $table, array( 'id' => $id ), array( '%d' ) );
+
+		$city_id = absint( $city_id );
+
+		// Delete child areas first.
+		$areas_table = self::get_areas_table_name();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query(
+			$wpdb->prepare( "DELETE FROM {$areas_table} WHERE city_id = %d", $city_id )
+		);
+
+		$cities_table = self::get_cities_table_name();
+		return false !== $wpdb->delete( $cities_table, array( 'city_id' => $city_id ), array( '%d' ) );
 	}
 
 	/**
-	 * Toggles is_enabled for a single area.
+	 * Toggles is_active for a city.
 	 *
-	 * @param int $id
-	 * @return int|false  New status value (0 or 1) or false if not found.
+	 * @param int $city_id
+	 * @return int|false
 	 */
-	public static function toggle_area( $id ) {
+	public static function toggle_city( int $city_id ) {
 		global $wpdb;
-		$table = self::get_table_name();
+		$table   = self::get_cities_table_name();
+		$city_id = absint( $city_id );
 
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$current = $wpdb->get_var(
-			$wpdb->prepare( "SELECT is_enabled FROM {$table} WHERE id = %d", $id )
+			$wpdb->prepare( "SELECT is_active FROM {$table} WHERE city_id = %d", $city_id )
 		);
 
 		if ( is_null( $current ) ) {
@@ -360,30 +429,294 @@ class KDM_Database {
 
 		$new = $current ? 0 : 1;
 
-		return false !== $wpdb->update(
+		$result = $wpdb->update(
 			$table,
-			array( 'is_enabled' => $new, 'updated_at' => current_time( 'mysql' ) ),
-			array( 'id' => $id ),
+			array( 'is_active' => $new, 'updated_at' => current_time( 'mysql' ) ),
+			array( 'city_id' => $city_id ),
 			array( '%d', '%s' ),
 			array( '%d' )
-		) ? $new : false;
+		);
+
+		return false !== $result ? $new : false;
 	}
 
 	/**
-	 * Bulk-updates sort_order values after a drag-and-drop reorder.
+	 * Bulk-updates sorting values for cities after drag-and-drop.
 	 *
-	 * @param array $items  [ ['id' => int, 'sort_order' => int], ... ]
+	 * @param array $items [ ['city_id' => int, 'sorting' => int], ... ]
 	 * @return bool
 	 */
-	public static function update_sort_order( array $items ) {
+	public static function update_city_sort_order( array $items ): bool {
 		global $wpdb;
-		$table = self::get_table_name();
+		$table = self::get_cities_table_name();
 
 		foreach ( $items as $item ) {
 			$wpdb->update(
 				$table,
-				array( 'sort_order' => absint( $item['sort_order'] ) ),
-				array( 'id'         => absint( $item['id'] ) ),
+				array( 'sorting' => absint( $item['sorting'] ) ),
+				array( 'city_id' => absint( $item['city_id'] ) ),
+				array( '%d' ),
+				array( '%d' )
+			);
+		}
+
+		return true;
+	}
+
+	// ---------------------------------------------------------------------------
+	// Area — Read
+	// ---------------------------------------------------------------------------
+
+	/**
+	 * Fetches all areas for a city (admin — includes inactive).
+	 *
+	 * @param int $city_id
+	 * @return array
+	 */
+	public static function get_all_areas_by_city( int $city_id ): array {
+		global $wpdb;
+		$table = self::get_areas_table_name();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE city_id = %d ORDER BY sorting ASC, area_id ASC",
+				absint( $city_id )
+			),
+			ARRAY_A
+		);
+	}
+
+	/**
+	 * Fetches active areas for a city.
+	 *
+	 * @param int $city_id
+	 * @return array
+	 */
+	public static function get_areas_by_city( int $city_id ): array {
+		global $wpdb;
+		$table = self::get_areas_table_name();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT * FROM {$table} WHERE city_id = %d AND is_active = 1 ORDER BY sorting ASC, area_id ASC",
+				absint( $city_id )
+			),
+			ARRAY_A
+		);
+	}
+
+	/**
+	 * Fetches a single area by ID.
+	 *
+	 * @param int $area_id
+	 * @return array|null
+	 */
+	public static function get_area( int $area_id ): ?array {
+		global $wpdb;
+		$table = self::get_areas_table_name();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		return $wpdb->get_row(
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE area_id = %d", absint( $area_id ) ),
+			ARRAY_A
+		);
+	}
+
+	/**
+	 * Returns all enabled areas grouped by city for a country.
+	 * Used by the checkout combo dropdown.
+	 *
+	 * @param string $country_iso2
+	 * @return array [ city_id => ['city' => city_row, 'areas' => [area_rows...]], ... ]
+	 */
+	public static function get_all_areas_grouped_by_city( string $country_iso2 ): array {
+		global $wpdb;
+
+		$cities_table = self::get_cities_table_name();
+		$areas_table  = self::get_areas_table_name();
+		$country      = sanitize_text_field( $country_iso2 );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$rows = $wpdb->get_results(
+			$wpdb->prepare(
+				"SELECT a.*, c.city_name, c.country_iso2
+				 FROM {$areas_table} a
+				 INNER JOIN {$cities_table} c ON a.city_id = c.city_id
+				 WHERE c.country_iso2 = %s AND c.is_active = 1 AND a.is_active = 1
+				 ORDER BY c.sorting ASC, c.city_id ASC, a.sorting ASC, a.area_id ASC",
+				$country
+			),
+			ARRAY_A
+		);
+
+		$grouped = array();
+		foreach ( $rows as $row ) {
+			$cid = (int) $row['city_id'];
+			if ( ! isset( $grouped[ $cid ] ) ) {
+				$grouped[ $cid ] = array(
+					'city' => array(
+						'city_id'      => $cid,
+						'city_name'    => $row['city_name'],
+						'country_iso2' => $row['country_iso2'],
+					),
+					'areas' => array(),
+				);
+			}
+			$grouped[ $cid ]['areas'][] = $row;
+		}
+
+		return $grouped;
+	}
+
+	/**
+	 * Returns all country ISO2 codes that have at least one active city.
+	 *
+	 * @return array e.g. ['KW', 'SA']
+	 */
+	public static function get_countries_with_cities(): array {
+		global $wpdb;
+		$table = self::get_cities_table_name();
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$results = $wpdb->get_col(
+			"SELECT DISTINCT country_iso2 FROM {$table} WHERE is_active = 1"
+		);
+
+		return $results ?: array();
+	}
+
+	// ---------------------------------------------------------------------------
+	// Area — Write
+	// ---------------------------------------------------------------------------
+
+	/**
+	 * Updates an existing area.
+	 *
+	 * @param int   $area_id
+	 * @param array $data
+	 * @return bool
+	 */
+	public static function save_area( int $area_id, array $data ): bool {
+		global $wpdb;
+		$table = self::get_areas_table_name();
+
+		$data['updated_at'] = current_time( 'mysql' );
+
+		return false !== $wpdb->update(
+			$table,
+			$data,
+			array( 'area_id' => absint( $area_id ) ),
+			null,
+			array( '%d' )
+		);
+	}
+
+	/**
+	 * Inserts a new area. Auto-assigns sorting = MAX + 1 for the city.
+	 *
+	 * @param array $data
+	 * @return int|false
+	 */
+	public static function add_area( array $data ) {
+		global $wpdb;
+		$table   = self::get_areas_table_name();
+		$city_id = absint( $data['city_id'] ?? 0 );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$max = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT MAX(sorting) FROM {$table} WHERE city_id = %d",
+				$city_id
+			)
+		);
+
+		$now = current_time( 'mysql' );
+
+		$insert_data = array(
+			'city_id'        => $city_id,
+			'area_name'      => $data['area_name'] ?? wp_json_encode( array( 'en' => '', 'ar' => '' ) ),
+			'is_active'      => isset( $data['is_active'] ) ? absint( $data['is_active'] ) : 1,
+			'sorting'        => isset( $data['sorting'] ) ? absint( $data['sorting'] ) : ( is_null( $max ) ? 0 : (int) $max + 1 ),
+			'delivery_price' => (float) ( $data['delivery_price'] ?? 0 ),
+			'express_fee'    => (float) ( $data['express_fee'] ?? 0 ),
+			'delivery_notes' => $data['delivery_notes'] ?? null,
+			'minimum_order'  => (float) ( $data['minimum_order'] ?? 0 ),
+			'created_at'     => $now,
+			'updated_at'     => $now,
+		);
+
+		$result = $wpdb->insert(
+			$table,
+			$insert_data,
+			array( '%d', '%s', '%d', '%d', '%f', '%f', '%s', '%f', '%s', '%s' )
+		);
+
+		return $result ? (int) $wpdb->insert_id : false;
+	}
+
+	/**
+	 * Deletes a single area by ID.
+	 *
+	 * @param int $area_id
+	 * @return bool
+	 */
+	public static function delete_area( int $area_id ): bool {
+		global $wpdb;
+		$table = self::get_areas_table_name();
+
+		return false !== $wpdb->delete( $table, array( 'area_id' => absint( $area_id ) ), array( '%d' ) );
+	}
+
+	/**
+	 * Toggles is_active for an area.
+	 *
+	 * @param int $area_id
+	 * @return int|false
+	 */
+	public static function toggle_area( int $area_id ) {
+		global $wpdb;
+		$table   = self::get_areas_table_name();
+		$area_id = absint( $area_id );
+
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$current = $wpdb->get_var(
+			$wpdb->prepare( "SELECT is_active FROM {$table} WHERE area_id = %d", $area_id )
+		);
+
+		if ( is_null( $current ) ) {
+			return false;
+		}
+
+		$new = $current ? 0 : 1;
+
+		$result = $wpdb->update(
+			$table,
+			array( 'is_active' => $new, 'updated_at' => current_time( 'mysql' ) ),
+			array( 'area_id' => $area_id ),
+			array( '%d', '%s' ),
+			array( '%d' )
+		);
+
+		return false !== $result ? $new : false;
+	}
+
+	/**
+	 * Bulk-updates sorting values for areas after drag-and-drop.
+	 *
+	 * @param array $items [ ['area_id' => int, 'sorting' => int], ... ]
+	 * @return bool
+	 */
+	public static function update_sort_order( array $items ): bool {
+		global $wpdb;
+		$table = self::get_areas_table_name();
+
+		foreach ( $items as $item ) {
+			$wpdb->update(
+				$table,
+				array( 'sorting' => absint( $item['sorting'] ) ),
+				array( 'area_id' => absint( $item['area_id'] ) ),
 				array( '%d' ),
 				array( '%d' )
 			);
@@ -393,44 +726,42 @@ class KDM_Database {
 	}
 
 	/**
-	 * Copies a single numeric field's value to all areas in a governorate.
-	 * Only the whitelisted price fields are allowed — column name cannot be
-	 * parameterised in a prepared statement, so a strict whitelist is used.
+	 * Copies a field value to all areas in a city.
+	 * Column name is whitelisted — cannot be parameterised in prepared statements.
 	 *
-	 * @param string $gov_key     Governorate slug.
-	 * @param string $field_name  Column name — must be in the allowed list.
-	 * @param float  $value       Value to set.
-	 * @return int|false  Number of rows affected, or false on failure / bad field.
+	 * @param int    $city_id
+	 * @param string $field_name
+	 * @param mixed  $value
+	 * @return int|false
 	 */
-	public static function bulk_update_field( $gov_key, $field_name, $value ) {
+	public static function bulk_update_field( int $city_id, string $field_name, $value ) {
 		global $wpdb;
-		$table = self::get_table_name();
+		$table   = self::get_areas_table_name();
+		$city_id = absint( $city_id );
 
-		// Strict whitelists — column name cannot be parameterised, so it is interpolated
-		// only after passing through an explicit allow-list.
 		$numeric_fields = array( 'delivery_price', 'express_fee', 'minimum_order' );
-		$text_fields    = array( 'delivery_notes', 'delivery_notes_en' );
+		$json_fields    = array( 'delivery_notes' );
 
 		if ( in_array( $field_name, $numeric_fields, true ) ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			return $wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$table} SET `{$field_name}` = %f, updated_at = %s WHERE governorate_key = %s",
+					"UPDATE {$table} SET `{$field_name}` = %f, updated_at = %s WHERE city_id = %d",
 					(float) $value,
 					current_time( 'mysql' ),
-					$gov_key
+					$city_id
 				)
 			);
 		}
 
-		if ( in_array( $field_name, $text_fields, true ) ) {
+		if ( in_array( $field_name, $json_fields, true ) ) {
 			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 			return $wpdb->query(
 				$wpdb->prepare(
-					"UPDATE {$table} SET `{$field_name}` = %s, updated_at = %s WHERE governorate_key = %s",
+					"UPDATE {$table} SET `{$field_name}` = %s, updated_at = %s WHERE city_id = %d",
 					(string) $value,
 					current_time( 'mysql' ),
-					$gov_key
+					$city_id
 				)
 			);
 		}
@@ -443,12 +774,17 @@ class KDM_Database {
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * Drops the table entirely. Only called from uninstall.php.
+	 * Drops both tables. Only called from uninstall.php.
 	 */
-	public static function drop_table() {
+	public static function drop_tables(): void {
 		global $wpdb;
-		$table = self::get_table_name();
+
+		$areas  = self::get_areas_table_name();
+		$cities = self::get_cities_table_name();
+
 		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
-		$wpdb->query( "DROP TABLE IF EXISTS {$table}" );
+		$wpdb->query( "DROP TABLE IF EXISTS {$areas}" );
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$wpdb->query( "DROP TABLE IF EXISTS {$cities}" );
 	}
 }

@@ -3,23 +3,23 @@
  * Uninstall handler.
  *
  * WordPress calls this file automatically when the plugin is deleted
- * from the Plugins screen. It runs with no plugin code loaded, so we
- * require only the Database class.
+ * from the Plugins screen.
  *
- * WARNING: This permanently drops the delivery areas table and removes
+ * WARNING: This permanently drops both delivery tables and removes
  * all plugin options. There is no recovery path after this runs.
  *
  * @package KuwaitDeliveryManager
  */
 
-// Security: bail if not called by WordPress uninstall process
+// Security: bail if not called by WordPress uninstall process.
 defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 
-// Load only what we need — no need for the full plugin stack
+// Load only what we need.
 require_once plugin_dir_path( __FILE__ ) . 'includes/class-database.php';
 
-// Drop the custom table
-KDM_Database::drop_table();
+// Drop both custom tables (areas first, then cities).
+KDM_Database::drop_tables();
 
-// Remove plugin options stored in wp_options
+// Remove plugin options.
 delete_option( 'kdm_db_version' );
+delete_option( 'kdm_express_enabled' );

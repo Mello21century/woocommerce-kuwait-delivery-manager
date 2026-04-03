@@ -3,11 +3,10 @@
  * KDM_Helper
  *
  * Static utilities used throughout the plugin:
- *   - Kuwait governorate definitions (Arabic + English)
- *   - Input sanitisation for area data (supports both language variants)
+ *   - Input sanitisation for city and area data
+ *   - JSON field encoding/decoding helpers
  *   - Price formatting (KWD — 3 decimal places)
  *   - Capability check
- *   - Governorate key validation
  *
  * @package KuwaitDeliveryManager
  * @since   1.0.0
@@ -18,83 +17,69 @@ defined( 'ABSPATH' ) || exit;
 class KDM_Helper {
 
 	// ---------------------------------------------------------------------------
-	// Governorates
+	// JSON Field Helpers
 	// ---------------------------------------------------------------------------
 
 	/**
-	 * Returns the canonical list of Kuwait governorates.
+	 * Safely decodes a JSON column value into an associative array.
+	 * Returns ['en' => '', 'ar' => ''] on null, empty, or invalid JSON.
 	 *
-	 * Each value is an associative array with:
-	 *   'ar' => Arabic display name
-	 *   'en' => English display name
-	 *
-	 * @return array<string, array{ar: string, en: string}>
+	 * @param mixed $value  Raw JSON string from database.
+	 * @return array{en: string, ar: string}
 	 */
-	public static function get_governorates() {
+	public static function decode_json_field( $value ): array {
+		$default = array( 'en' => '', 'ar' => '' );
+
+		if ( empty( $value ) ) {
+			return $default;
+		}
+
+		$decoded = json_decode( (string) $value, true );
+
+		if ( ! is_array( $decoded ) ) {
+			return $default;
+		}
+
 		return array(
-			'capital'   => array( 'ar' => 'العاصمة',       'en' => 'Kuwait Capital' ),
-			'hawalli'   => array( 'ar' => 'حولي',           'en' => 'Hawalli' ),
-			'farwaniya' => array( 'ar' => 'الفروانية',      'en' => 'Al-Farwaniyah' ),
-			'ahmadi'    => array( 'ar' => 'الأحمدي',        'en' => 'Ahmadi' ),
-			'jahra'     => array( 'ar' => 'الجهراء',        'en' => 'Al-Jahra' ),
-			'mubarak'   => array( 'ar' => 'مبارك الكبير',  'en' => 'Mubarak Al-Kabeer' ),
+			'en' => isset( $decoded['en'] ) ? (string) $decoded['en'] : '',
+			'ar' => isset( $decoded['ar'] ) ? (string) $decoded['ar'] : '',
 		);
 	}
 
 	/**
-	 * Returns only the Arabic names keyed by slug — for backward-compat use.
+	 * Builds a JSON-encoded name string from POST data.
+	 * Looks for keys like {$prefix}_en and {$prefix}_ar.
 	 *
-	 * @return array<string, string>
+	 * @param array  $data   Raw POST data.
+	 * @param string $prefix Key prefix, e.g. 'name' looks for 'name_en', 'name_ar'.
+	 * @return string JSON string.
 	 */
-	public static function get_governorates_ar() {
-		return array_map( function ( $g ) { return $g['ar']; }, self::get_governorates() );
+	public static function sanitize_json_name( array $data, string $prefix = 'name' ): string {
+		$en = isset( $data[ $prefix . '_en' ] )
+			? sanitize_text_field( wp_unslash( $data[ $prefix . '_en' ] ) )
+			: '';
+		$ar = isset( $data[ $prefix . '_ar' ] )
+			? sanitize_text_field( wp_unslash( $data[ $prefix . '_ar' ] ) )
+			: '';
+
+		return wp_json_encode( array( 'en' => $en, 'ar' => $ar ), JSON_UNESCAPED_UNICODE );
 	}
 
 	/**
-	 * Returns the Arabic name for a single governorate.
+	 * Builds a JSON-encoded delivery notes string from POST data.
 	 *
-	 * @param string $key  Governorate slug.
-	 * @return string
+	 * @param array $data  Raw POST data with 'notes_en' and/or 'notes_ar'.
+	 * @return string JSON string.
 	 */
-	public static function get_governorate_ar( $key ) {
-		$govs = self::get_governorates();
-		return isset( $govs[ $key ] ) ? $govs[ $key ]['ar'] : $key;
-	}
+	public static function sanitize_json_notes( array $data ): string {
+		$en = isset( $data['notes_en'] )
+			? sanitize_textarea_field( wp_unslash( $data['notes_en'] ) )
+			: '';
+		$ar = isset( $data['notes_ar'] )
+			? sanitize_textarea_field( wp_unslash( $data['notes_ar'] ) )
+			: '';
 
-	/**
-	 * Returns the English name for a single governorate.
-	 *
-	 * @param string $key  Governorate slug.
-	 * @return string
-	 */
-	public static function get_governorate_en( $key ) {
-		$govs = self::get_governorates();
-		return isset( $govs[ $key ] ) ? $govs[ $key ]['en'] : $key;
-	}
-
-	/**
-	 * Returns both the Arabic and English names for a governorate as a formatted string.
-	 * Used in admin UI where both names are shown together.
-	 *
-	 * @param string $key Governorate slug.
-	 * @return string  e.g. "العاصمة — Kuwait Capital"
-	 */
-	public static function get_governorate_bilingual( $key ) {
-		$govs = self::get_governorates();
-		if ( ! isset( $govs[ $key ] ) ) {
-			return $key;
-		}
-		return $govs[ $key ]['ar'] . ' — ' . $govs[ $key ]['en'];
-	}
-
-	/**
-	 * Validates that a governorate slug exists in the canonical list.
-	 *
-	 * @param string $key  Governorate slug.
-	 * @return bool
-	 */
-	public static function is_valid_governorate( $key ) {
-		return array_key_exists( $key, self::get_governorates() );
+		return wp_json_encode( array( 'en' => $en, 'ar' => $ar ), JSON_UNESCAPED_UNICODE );
 	}
 
 	// ---------------------------------------------------------------------------
@@ -103,55 +88,49 @@ class KDM_Helper {
 
 	/**
 	 * Sanitises area data from a POST request.
-	 * Only keys present in $data are included in the output, so the result
-	 * can be passed directly to $wpdb->update / $wpdb->insert.
-	 *
-	 * Supported keys (all optional unless noted):
-	 *   area_name_ar       — Arabic area name
-	 *   area_name_en       — English area name
-	 *   delivery_price     — float, KWD
-	 *   express_fee        — float, KWD
-	 *   delivery_notes     — Arabic delivery notes
-	 *   delivery_notes_en  — English delivery notes
-	 *   minimum_order      — float, KWD
-	 *   is_enabled         — 0 or 1
-	 *   sort_order         — non-negative integer
+	 * Only keys present in $data are included in the output.
 	 *
 	 * @param array $data  Raw POST data.
 	 * @return array       Sanitised data.
 	 */
-	public static function sanitize_area_data( array $data ) {
+	public static function sanitize_area_data( array $data ): array {
 		$clean = array();
 
-		// Text fields — both language variants
-		foreach ( array( 'area_name_ar', 'area_name_en' ) as $field ) {
-			if ( array_key_exists( $field, $data ) ) {
-				$clean[ $field ] = sanitize_text_field( wp_unslash( $data[ $field ] ) );
-			}
-		}
-
-		// Numeric / price fields
+		// Numeric / price fields.
 		foreach ( array( 'delivery_price', 'express_fee', 'minimum_order' ) as $field ) {
 			if ( array_key_exists( $field, $data ) ) {
 				$clean[ $field ] = self::sanitize_price( $data[ $field ] );
 			}
 		}
 
-		// Notes — textarea (may contain newlines)
-		foreach ( array( 'delivery_notes', 'delivery_notes_en' ) as $field ) {
-			if ( array_key_exists( $field, $data ) ) {
-				$clean[ $field ] = sanitize_textarea_field( wp_unslash( $data[ $field ] ) );
-			}
+		// Boolean flag.
+		if ( array_key_exists( 'is_active', $data ) ) {
+			$clean['is_active'] = absint( $data['is_active'] ) ? 1 : 0;
 		}
 
-		// Boolean flag
-		if ( array_key_exists( 'is_enabled', $data ) ) {
-			$clean['is_enabled'] = absint( $data['is_enabled'] ) ? 1 : 0;
+		// Sort order.
+		if ( array_key_exists( 'sorting', $data ) ) {
+			$clean['sorting'] = absint( $data['sorting'] );
 		}
 
-		// Sort order
-		if ( array_key_exists( 'sort_order', $data ) ) {
-			$clean['sort_order'] = absint( $data['sort_order'] );
+		return $clean;
+	}
+
+	/**
+	 * Sanitises city data from a POST request.
+	 *
+	 * @param array $data  Raw POST data.
+	 * @return array       Sanitised data.
+	 */
+	public static function sanitize_city_data( array $data ): array {
+		$clean = array();
+
+		if ( array_key_exists( 'is_active', $data ) ) {
+			$clean['is_active'] = absint( $data['is_active'] ) ? 1 : 0;
+		}
+
+		if ( array_key_exists( 'sorting', $data ) ) {
+			$clean['sorting'] = absint( $data['sorting'] );
 		}
 
 		return $clean;
@@ -169,7 +148,7 @@ class KDM_Helper {
 	 * @param mixed $value  Raw value.
 	 * @return float
 	 */
-	public static function sanitize_price( $value ) {
+	public static function sanitize_price( $value ): float {
 		$value = str_replace( ',', '.', (string) $value );
 		return round( max( 0.0, floatval( $value ) ), 3 );
 	}
@@ -180,7 +159,7 @@ class KDM_Helper {
 	 * @param float|string $price
 	 * @return string  e.g. "1.500"
 	 */
-	public static function format_price( $price ) {
+	public static function format_price( $price ): string {
 		return number_format( (float) $price, 3, '.', '' );
 	}
 
@@ -194,7 +173,7 @@ class KDM_Helper {
 	 *
 	 * @return bool
 	 */
-	public static function current_user_can_manage() {
+	public static function current_user_can_manage(): bool {
 		return current_user_can( 'manage_options' ) || current_user_can( 'manage_woocommerce' );
 	}
 }

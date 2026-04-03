@@ -1,43 +1,47 @@
 ## === Kuwait Delivery Manager ===
 
 - Contributors: ***Ahmed Safaa***
-- Tags: woocommerce, delivery, kuwait, shipping, zones
+- Tags: woocommerce, delivery, shipping, zones, multi-country
 - Requires at least: 5.8
 - Tested up to: 6.6
 - Requires PHP: 7.4
-- Stable tag: 1.2.0
+- Stable tag: 1.3.0
 - License: GPLv2 or later
 - License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Manage Kuwait delivery areas and pricing from the WooCommerce admin dashboard with an Arabic RTL interface.
+Multi-country delivery area and pricing manager for WooCommerce — manage cities, areas, and delivery fees from a dedicated admin panel.
 
 ### == Description ==
 
-Kuwait Delivery Manager provides a professional admin interface for managing delivery zones across all six Kuwait
-governorates:
-العاصمة · حولي · الفروانية · الأحمدي · الجهراء · مبارك الكبير
+Kuwait Delivery Manager provides a professional admin interface for managing delivery zones across multiple countries. Define cities, areas, delivery prices, express fees, and minimum order thresholds — all from a dedicated top-level admin menu.
 
 #### **Features:**
 
-* Arabic RTL admin interface
-* Sidebar governorate selector — switch areas without page reload (AJAX)
+* Multi-country support — manage delivery for any country via WooCommerce's country list
+* Two-table database schema: cities and areas with full JSON bilingual (EN/AR) names
+* Own top-level admin menu with 4 subpages: Areas, Cities, Import, Settings
+* AJAX-driven city sidebar — switch areas without page reload
 * Inline row editing — click Edit, change values, click Save
-* Drag-and-drop sort order within each governorate
-* Per-area status toggle (enabled / disabled) with immediate AJAX save
-* Add new areas without leaving the page
-* Delete areas with confirmation
-* Full data persistence in a custom database table
-* Seeded with real Kuwait area names and typical KWD pricing
-* WooCommerce checkout integration architecture ready
+* Drag-and-drop sort order within each city
+* Per-area and per-city status toggle with immediate AJAX save
+* CSV import wizard — bulk-import cities or areas with column mapping
+* Free delivery threshold — set minimum order amount per area (cart >= threshold → free delivery)
+* Express delivery fee support — optional per-area surcharge
+* Bilingual fields — Arabic and English names and delivery notes stored as JSON
+* WooCommerce checkout integration with searchable combo dropdown
+* Live price preview panel on checkout page
+* WPML and Polylang compatible
+* WooCommerce HPOS compatible
+* All UI strings in English with full i18n support via `__()`
 
-#### **Table columns per area:**
+#### **Area fields:**
 
-* المنطقة (Area name)
-* سعر التوصيل (Normal delivery price — KWD)
-* رسوم التوصيل السريع (Express delivery fee — KWD)
-* ملاحظات التوصيل (Delivery notes)
-* أقل قيمة للطلب (Minimum order amount — KWD)
-* الحالة (Enable / disable toggle)
+* Area Name (EN / AR)
+* Delivery Price
+* Express Fee
+* Delivery Notes (EN / AR)
+* Minimum Order (free delivery threshold)
+* Status (active / inactive)
 
 #### == Installation ==
 
@@ -46,44 +50,34 @@ governorates:
 3. Upload the zip file and click **Install Now**.
 4. After installation, click **Activate Plugin**.
 5. The plugin will automatically:
-    - Create the `wp_kdm_delivery_areas` database table
-    - Seed all 6 Kuwait governorates with default areas and prices
-6. If WooCommerce is active, find the manager under **WooCommerce → مناطق الكويت**.
-   Otherwise, a top-level **مناطق الكويت** menu item is added.
+    - Create the `kdm_delivery_cities` and `kdm_delivery_areas` database tables
+    - Seed 6 Kuwait cities with default areas and prices
+6. Find the manager under the **Delivery Manager** top-level menu.
 
 #### == Usage ==
 
-1. Navigate to the delivery manager admin page.
-2. Click a governorate name in the right sidebar.
-3. The left panel loads all areas for that governorate.
-4. **Edit a row:** Click the تعديل button, modify any field, click حفظ.
+1. Navigate to **Delivery Manager → Areas**.
+2. Select a country from the dropdown at the top.
+3. Click a city name in the sidebar to load its areas.
+4. **Edit a row:** Click the Edit button, modify any field, click Save.
 5. **Toggle status:** Click the ON/OFF switch — saves immediately.
-6. **Add an area:** Click إضافة منطقة, fill in the new row, click إضافة.
+6. **Add an area:** Click Add New Area, fill in the new row, click Add.
 7. **Delete an area:** Click the trash icon and confirm.
-8. **Reorder:** Drag rows by the ≡ handle on the left side of each row.
+8. **Reorder:** Drag rows by the handle on the left side of each row.
+9. **Copy to all:** Copy delivery notes from one area to all others in the same city.
 
-#### == WooCommerce Checkout Integration (Future) ==
+#### Managing Cities
 
-The database schema already stores all pricing data needed for checkout
-integration. To wire it up in a future release or custom extension:
+1. Navigate to **Delivery Manager → Cities**.
+2. Select a country and manage cities: add, edit bilingual names, toggle, reorder, or delete.
+3. Deleting a city removes all its areas (cascade).
 
-1. Create `includes/class-checkout.php`
-2. On the checkout page, output a **Governorate** select populated from
-   `KDM_Helper::get_governorates()`.
-3. On governorate change (JS), fetch areas via `kdm_get_areas` (same AJAX
-   action already registered) and populate an **Area** select.
-4. On area selection, read `delivery_price` from the response and apply it
-   via WooCommerce's `woocommerce_package_rates` filter or a custom
-   shipping method extending `WC_Shipping_Method`.
-5. Store the selected governorate/area in `WC()->session` and apply the
-   fee at `woocommerce_cart_calculate_fees`.
+#### CSV Import
 
-#### Key WooCommerce hooks to use:
-
-- `woocommerce_checkout_fields` — add the two custom selects
-- `woocommerce_checkout_process` — validate selection
-- `woocommerce_checkout_update_order_meta` — persist to order meta
-- `woocommerce_package_rates` — filter/replace shipping rates
+1. Navigate to **Delivery Manager → Import**.
+2. Select country, import type (Cities or Areas), and upload a CSV file.
+3. Map CSV columns to database fields.
+4. For area imports, choose city matching mode: by ID, by English name, or by Arabic name.
 
 #### == Frequently Asked Questions ==
 
@@ -95,19 +89,37 @@ warns you that checkout integration requires WooCommerce.
 ##### = Is the data safe when I deactivate the plugin? =
 
 Yes. Deactivation preserves all data. Only **deleting** the plugin (via the
-Plugins screen) will drop the table via uninstall.php.
+Plugins screen) will drop the tables via uninstall.php.
 
-##### = Can I add more governorates? =
+##### = Can I add more countries? =
 
-Yes. Add a new entry to `KDM_Helper::get_governorates()` and re-seed, or
-add areas manually via the admin interface.
+Yes. Any country from WooCommerce's country list can be used. Add cities for
+a country and areas will appear in checkout for customers from that country.
 
-##### = What currency is used? =
+##### = What about minimum order amounts? =
 
-KWD (Kuwaiti Dinar). Prices are stored and displayed with 3 decimal places
-per the KWD standard.
+The minimum_order field acts as a free delivery threshold. If a customer's cart
+total meets or exceeds the threshold, delivery fees become zero. Set to 0 to
+always charge delivery fees.
 
 ##### == Changelog ==
+
+= 1.3.0 =
+
+* BREAKING: Complete database schema rewrite — two tables (`kdm_delivery_cities` + `kdm_delivery_areas`) replace the single `kdm_delivery_areas` table. JSON `longtext` columns for bilingual names and notes (MySQL 5.6 compatible).
+* NEW: Multi-country support — manage delivery for any country, not just Kuwait. Country dropdown powered by WooCommerce's country list.
+* NEW: Own top-level admin menu group (Delivery Manager) with 4 subpages: Areas, Cities, Import, Settings.
+* NEW: Cities management page — full CRUD with bilingual names, toggle, drag-sort.
+* NEW: CSV import wizard — 2-step process (upload → column mapping) for bulk-importing cities or areas. Supports 3 city matching modes (by ID, by English name, by Arabic name).
+* NEW: Free delivery threshold — `minimum_order` field per area. Cart total >= threshold = free delivery; set to 0 to always charge.
+* NEW: Dynamic checkout — combo dropdown adapts to billing country. Countries without cities in DB show no delivery fields.
+* NEW: Manual cascade delete — deleting a city removes all child areas.
+* NEW: CSV file security — randomized filenames, `.htaccess` deny-all, transient-based path storage.
+* IMPROVED: All hardcoded Arabic strings replaced with English wrapped in `__()` for full i18n.
+* IMPROVED: Removed all hardcoded `direction: rtl` from CSS — theme/browser handles text direction.
+* IMPROVED: Checkout session keys updated (`kdm_city_id` replaces `kdm_gov_key`).
+* IMPROVED: Currency symbol from `get_woocommerce_currency_symbol()` instead of hardcoded.
+* REMOVED: Governorate system — replaced entirely by database-driven cities.
 
 = 1.2.0 =
 

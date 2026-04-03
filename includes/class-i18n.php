@@ -13,16 +13,13 @@
  *
  *   3.  Provides static helpers used throughout the plugin to:
  *         - Detect the current front-end language code (AR / EN / other).
- *         - Pick the right language variant of area / governorate names.
+ *         - Pick the right language variant of city / area names from JSON.
  *         - Translate a string through whichever translation plugin is active.
  *
  * Translation plugin priority (highest wins):
  *   Polylang → WPML → TranslatePress → WP core locale
  *
  * Text domain: kuwait-delivery-manager
- * Language files must live in:
- *   /wp-content/plugins/kuwait-delivery-manager/languages/
- *   OR the global /wp-content/languages/plugins/ directory.
  *
  * @package KuwaitDeliveryManager
  * @since   1.2.0
@@ -45,75 +42,39 @@ class KDM_I18n {
 	}
 
 	/**
-	 * Loads the plugin's .mo translation file.
-	 * WP loads the file from /languages/ inside the plugin folder, falling back
-	 * to the global /wp-content/languages/plugins/ directory.
-	 */
-	public function load_textdomain() {
-		load_plugin_textdomain(
-			'kuwait-delivery-manager',
-			false,
-			dirname( plugin_basename( KDM_PLUGIN_FILE ) ) . '/languages'
-		);
-	}
-
-	/**
-	 * Registers translatable strings with active translation plugins.
-	 * These strings then appear in WPML's String Translation screen and
-	 * Polylang's Strings Translations screen.
-	 */
-	public function register_strings() {
-		// Build the flat list of strings to register
-		$strings = $this->get_registrable_strings();
-
-		foreach ( $strings as $name => $value ) {
-			// Polylang
-			if ( function_exists( 'pll_register_string' ) ) {
-				pll_register_string( $name, $value, self::STRING_GROUP );
-			}
-
-			// WPML
-			if ( has_action( 'wpml_register_single_string' ) ) {
-				do_action( 'wpml_register_single_string', self::STRING_GROUP, $name, $value );
-			}
-		}
-	}
-
-	/**
-	 * Returns the list of static strings to register with translation plugins.
+	 * Returns true when the current WordPress interface is RTL.
 	 *
-	 * @return array<string, string>  name => original_value
+	 * @return bool
 	 */
-	private function get_registrable_strings() {
-		$strings = array(
-			// Page headings
-			'page_title'    => __( 'Kuwait Delivery Zones Manager', 'kuwait-delivery-manager' ),
-			'page_subtitle' => __( 'Select a governorate to view and edit its delivery areas.', 'kuwait-delivery-manager' ),
+	public static function is_rtl(): bool {
+		return is_rtl();
+	}
 
-			// Column headers
-			'col_area'      => __( 'Area', 'kuwait-delivery-manager' ),
-			'col_price'     => __( 'Delivery Price', 'kuwait-delivery-manager' ),
-			'col_express'   => __( 'Express Fee', 'kuwait-delivery-manager' ),
-			'col_notes'     => __( 'Delivery Notes', 'kuwait-delivery-manager' ),
-			'col_min_order' => __( 'Min. Order', 'kuwait-delivery-manager' ),
-			'col_status'    => __( 'Status', 'kuwait-delivery-manager' ),
+	/**
+	 * Returns the appropriate area name based on the current language.
+	 * Decodes the JSON area_name column.
+	 *
+	 * @param array $area A row from the kdm_delivery_areas table.
+	 *
+	 * @return string
+	 */
+	public static function area_name( array $area ): string {
+		$names = KDM_Helper::decode_json_field( $area['area_name'] ?? '' );
 
-			// Checkout field labels
-			'checkout_gov'       => __( 'Governorate', 'kuwait-delivery-manager' ),
-			'checkout_area'      => __( 'Delivery Area', 'kuwait-delivery-manager' ),
-			'checkout_type'      => __( 'Delivery Type', 'kuwait-delivery-manager' ),
-			'checkout_normal'    => __( 'Standard Delivery', 'kuwait-delivery-manager' ),
-			'checkout_express'   => __( 'Express Delivery (extra fee)', 'kuwait-delivery-manager' ),
-			'checkout_fee_label' => __( 'Delivery Fee', 'kuwait-delivery-manager' ),
-		);
-
-		// Governorate names (both languages)
-		foreach ( KDM_Helper::get_governorates() as $key => $names ) {
-			$strings[ 'gov_ar_' . $key ] = $names['ar'];
-			$strings[ 'gov_en_' . $key ] = $names['en'];
+		if ( ! self::is_arabic() && ! empty( $names['en'] ) ) {
+			return $names['en'];
 		}
 
-		return $strings;
+		return ! empty( $names['ar'] ) ? $names['ar'] : $names['en'];
+	}
+
+	/**
+	 * Returns true when the active language is Arabic.
+	 *
+	 * @return bool
+	 */
+	public static function is_arabic(): bool {
+		return 'ar' === self::get_current_lang();
 	}
 
 	// ---------------------------------------------------------------------------
@@ -122,11 +83,10 @@ class KDM_I18n {
 
 	/**
 	 * Returns the active two-letter language code (e.g. 'ar', 'en').
-	 * Checks Polylang → WPML → TranslatePress → WP locale, in that order.
 	 *
-	 * @return string  Lowercase two-letter code, e.g. 'ar', 'en', 'fr'.
+	 * @return string
 	 */
-	public static function get_current_lang() {
+	public static function get_current_lang(): string {
 		// Polylang
 		if ( function_exists( 'pll_current_language' ) ) {
 			$lang = pll_current_language( 'slug' );
@@ -140,101 +100,126 @@ class KDM_I18n {
 			return strtolower( ICL_LANGUAGE_CODE );
 		}
 
-		// TranslatePress / GTranslate — stored in cookie or session
-		// (No standard API; fall through to locale)
-
-		// WordPress locale (e.g. 'ar', 'ar_KW', 'en_US')
+		// WordPress locale
 		$locale = is_admin() ? get_user_locale() : get_locale();
+		
 		return strtolower( substr( $locale, 0, 2 ) );
 	}
 
 	/**
-	 * Returns true when the active language is Arabic.
+	 * Returns the appropriate delivery notes for the current language.
+	 * Decodes the JSON delivery_notes column.
 	 *
-	 * @return bool
+	 * @param array $area A row from the kdm_delivery_areas table.
+	 *
+	 * @return string
 	 */
-	public static function is_arabic() {
-		return in_array( self::get_current_lang(), array( 'ar' ), true );
+	public static function delivery_notes( array $area ): string {
+		$notes = KDM_Helper::decode_json_field( $area['delivery_notes'] ?? '' );
+
+		if ( ! self::is_arabic() && ! empty( $notes['en'] ) ) {
+			return $notes['en'];
+		}
+
+		return ! empty( $notes['ar'] ) ? $notes['ar'] : $notes['en'];
 	}
 
 	/**
-	 * Returns true when the current WordPress admin interface is RTL.
+	 * Returns the appropriate city name for the current language.
+	 * Decodes the JSON city_name column.
 	 *
-	 * @return bool
+	 * @param array $city A row from the kdm_delivery_cities table.
+	 *
+	 * @return string
 	 */
-	public static function is_rtl() {
-		return is_rtl();
+	public static function city_name( array $city ): string {
+		$names = KDM_Helper::decode_json_field( $city['city_name'] ?? '' );
+
+		if ( ! self::is_arabic() && ! empty( $names['en'] ) ) {
+			return $names['en'];
+		}
+
+		return ! empty( $names['ar'] ) ? $names['ar'] : $names['en'];
 	}
 
 	// ---------------------------------------------------------------------------
-	// Language-aware content helpers
+	// Language-aware content helpers (JSON columns)
 	// ---------------------------------------------------------------------------
-
-	/**
-	 * Returns the appropriate area name based on the current language.
-	 * Falls back to Arabic if the English name is empty.
-	 *
-	 * @param array $area  A row from the kdm_delivery_areas table.
-	 * @return string
-	 */
-	public static function area_name( array $area ) {
-		if ( ! self::is_arabic() && ! empty( $area['area_name_en'] ) ) {
-			return $area['area_name_en'];
-		}
-		return $area['area_name_ar'];
-	}
-
-	/**
-	 * Returns the appropriate delivery notes string for the current language.
-	 * Falls back to Arabic if the English version is empty.
-	 *
-	 * @param array $area  A row from the kdm_delivery_areas table.
-	 * @return string
-	 */
-	public static function delivery_notes( array $area ) {
-		if ( ! self::is_arabic() && ! empty( $area['delivery_notes_en'] ) ) {
-			return $area['delivery_notes_en'];
-		}
-		return $area['delivery_notes'] ?? '';
-	}
-
-	/**
-	 * Returns the governorate display name for the current language.
-	 *
-	 * @param string $key  Governorate slug.
-	 * @return string
-	 */
-	public static function governorate_name( $key ) {
-		$govs = KDM_Helper::get_governorates();
-		if ( ! isset( $govs[ $key ] ) ) {
-			return $key;
-		}
-		if ( ! self::is_arabic() && ! empty( $govs[ $key ]['en'] ) ) {
-			return $govs[ $key ]['en'];
-		}
-		return $govs[ $key ]['ar'];
-	}
 
 	/**
 	 * Translates a string through the active translation plugin.
-	 * Falls through to the original string if no translation plugin is found.
 	 *
-	 * @param string $original  Original English string.
-	 * @param string $name      Unique string identifier (used by WPML/Polylang).
+	 * @param string $original Original string.
+	 * @param string $name Unique string identifier.
+	 *
 	 * @return string
 	 */
-	public static function translate_string( $original, $name ) {
-		// Polylang: pll__() returns the translation if registered
+	public static function translate_string( string $original, string $name ): string {
 		if ( function_exists( 'pll__' ) ) {
 			return pll__( $original );
 		}
 
-		// WPML: apply_filters wraps their translation lookup
 		if ( has_filter( 'wpml_translate_single_string' ) ) {
 			return apply_filters( 'wpml_translate_single_string', $original, self::STRING_GROUP, $name );
 		}
 
-		// Default: standard WP i18n (depends on loaded .mo file)
 		return $original;
+	}
+
+	/**
+	 * Loads the plugin's .mo translation file.
+	 */
+	public function load_textdomain() {
+		load_plugin_textdomain(
+			'kuwait-delivery-manager',
+			false,
+			dirname( plugin_basename( KDM_PLUGIN_FILE ) ) . '/languages'
+		);
+	}
+
+	/**
+	 * Registers translatable strings with active translation plugins.
+	 */
+	public function register_strings() {
+		$strings = $this->get_registrable_strings();
+
+		foreach ( $strings as $name => $value ) {
+			if ( function_exists( 'pll_register_string' ) ) {
+				pll_register_string( $name, $value, self::STRING_GROUP );
+			}
+
+			if ( has_action( 'wpml_register_single_string' ) ) {
+				do_action( 'wpml_register_single_string', self::STRING_GROUP, $name, $value );
+			}
+		}
+	}
+
+	/**
+	 * Returns the list of static strings to register with translation plugins.
+	 *
+	 * @return array<string, string>
+	 */
+	private function get_registrable_strings(): array {
+		return array(
+			// Page headings
+			'page_title'         => __( 'Delivery Areas Manager', 'kuwait-delivery-manager' ),
+			'page_subtitle'      => __( 'Select a city to view and edit its delivery areas.', 'kuwait-delivery-manager' ),
+
+			// Column headers
+			'col_area'           => __( 'Area', 'kuwait-delivery-manager' ),
+			'col_price'          => __( 'Delivery Price', 'kuwait-delivery-manager' ),
+			'col_express'        => __( 'Express Fee', 'kuwait-delivery-manager' ),
+			'col_notes'          => __( 'Delivery Notes', 'kuwait-delivery-manager' ),
+			'col_min_order'      => __( 'Min. Order', 'kuwait-delivery-manager' ),
+			'col_status'         => __( 'Status', 'kuwait-delivery-manager' ),
+
+			// Checkout field labels
+			'checkout_city'      => __( 'City', 'kuwait-delivery-manager' ),
+			'checkout_area'      => __( 'Delivery Area', 'kuwait-delivery-manager' ),
+			'checkout_type'      => __( 'Delivery Type', 'kuwait-delivery-manager' ),
+			'checkout_normal'    => __( 'Standard Delivery', 'kuwait-delivery-manager' ),
+			'checkout_express'   => __( 'Express Delivery (extra fee)', 'kuwait-delivery-manager' ),
+			'checkout_fee_label' => __( 'Delivery Fee', 'kuwait-delivery-manager' ),
+		);
 	}
 }

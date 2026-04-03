@@ -3,13 +3,13 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Woocommerce Kuwait Delivery Manager\n"
 "POT-Creation-Date: 2026-04-03 11:24+0300\n"
-"PO-Revision-Date: 2026-04-03 11:24+0300\n"
+"PO-Revision-Date: 2026-04-03 11:31+0300\n"
 "Last-Translator: \n"
 "Language-Team: \n"
+"Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
 "X-Generator: Poedit 3.6\n"
 "X-Poedit-Basepath: ..\n"
 "X-Poedit-Flags-xgettext: --add-comments=translators:\n"
@@ -22,695 +22,701 @@ msgstr ""
 
 #: includes/class-admin.php:31 includes/class-admin.php:32
 msgid "Delivery Manager"
-msgstr ""
+msgstr "الشحن بالمناطق"
 
 #: includes/class-admin.php:43
 msgid "Delivery Areas"
-msgstr ""
+msgstr "مناطق التسليم"
 
 #: includes/class-admin.php:44 includes/class-admin.php:359
 #: templates/admin-import-page.php:59
 msgid "Areas"
-msgstr ""
+msgstr "المناطق"
 
 #: includes/class-admin.php:53 templates/admin-cities-page.php:19
 msgid "Delivery Cities"
-msgstr ""
+msgstr "مدن التسليم"
 
 #: includes/class-admin.php:54 templates/admin-import-page.php:54
 #: templates/admin-page.php:43 templates/admin-page.php:46
 msgid "Cities"
-msgstr ""
+msgstr "المدن "
 
 #: includes/class-admin.php:63 includes/class-admin.php:64
 #: includes/class-admin.php:370 templates/admin-import-page.php:157
 msgid "Import"
-msgstr ""
+msgstr "استيراد"
 
 #: includes/class-admin.php:73 includes/class-admin.php:98
 msgid "Delivery Settings"
-msgstr ""
+msgstr "إعدادات التسليم"
 
 #: includes/class-admin.php:74
 msgid "Settings"
-msgstr ""
+msgstr "الإعدادات"
 
 #: includes/class-admin.php:105 includes/class-checkout.php:255
 #: includes/class-checkout.php:508 includes/class-checkout.php:560
 #: includes/class-checkout.php:609
 msgid "Express Delivery"
-msgstr ""
+msgstr "التوصيل السريع"
 
 #: includes/class-admin.php:120
 msgid "Enable express delivery option"
-msgstr ""
+msgstr "تفعيل خيار التوصيل السريع"
 
 #: includes/class-admin.php:123
 msgid ""
 "When disabled: the express fee column is hidden from the admin panel and the "
 "delivery type field is removed from checkout."
 msgstr ""
+"عند تعطيله: يتم إخفاء عمود الرسوم السريعة عن لوحة الإدارة ويتم إزالة حقل نوع "
+"التسليم من عملية التسجيل."
 
 #: includes/class-admin.php:134 includes/class-admin.php:141
 #: includes/class-admin.php:148 includes/class-admin.php:159
 msgid "You do not have permission to access this page."
-msgstr ""
+msgstr "ليس لديك إذن بالوصول إلى هذه الصفحة."
 
 #: includes/class-admin.php:268 includes/class-checkout.php:137
 #: includes/class-checkout.php:224 includes/class-checkout.php:510
 #: includes/class-checkout.php:562 includes/class-checkout.php:611
 msgid "KWD"
-msgstr ""
+msgstr "KWD"
 
 #: includes/class-admin.php:278 includes/class-admin.php:337
 #: templates/admin-page.php:52
 msgid "Loading..."
-msgstr ""
+msgstr "جار التحميل..."
 
 #: includes/class-admin.php:279 includes/class-admin.php:338
 #: includes/class-admin.php:367
 msgid "An error occurred. Please try again."
-msgstr ""
+msgstr "خطأ يرجى المحاولة مرة أخرى لاحقاً"
 
 #: includes/class-admin.php:280
 msgid "You have unsaved changes. Continue navigating?"
-msgstr ""
+msgstr "لديك تغييرات غير محفوظة. هل أستمر في التنقل؟"
 
 #: includes/class-admin.php:281
 msgid "No areas for this city. Click \"Add Area\" to create the first one."
-msgstr ""
+msgstr "لا توجد مناطق لهذه المدينة. انقر على \"إضافة منطقة\" لإنشاء الأولى."
 
 #: includes/class-admin.php:282 includes/class-admin.php:340
 msgid "Order saved"
-msgstr ""
+msgstr "تم تسجيل الطلب"
 
 #: includes/class-admin.php:283
 msgid "Close"
-msgstr ""
+msgstr "إغلاق"
 
 #: includes/class-admin.php:285 includes/class-admin.php:341
 msgid "Edit"
-msgstr ""
+msgstr "تعديل"
 
 #: includes/class-admin.php:286 includes/class-admin.php:342
 msgid "Save"
-msgstr ""
+msgstr "حفظ"
 
 #: includes/class-admin.php:287 includes/class-admin.php:343
 msgid "Cancel"
-msgstr ""
+msgstr "إلغاء"
 
 #: includes/class-admin.php:288 includes/class-admin.php:344
 msgid "Delete"
-msgstr ""
+msgstr "حذف"
 
 #: includes/class-admin.php:289
 msgid "Add Area"
-msgstr ""
+msgstr "إضافة المساحة"
 
 #: includes/class-admin.php:290 includes/class-admin.php:346
 msgid "Add"
-msgstr ""
+msgstr "إضافة"
 
 #: includes/class-admin.php:292 includes/class-admin.php:347
 msgid "Saving..."
-msgstr ""
+msgstr "جاري الحفظ..."
 
 #: includes/class-admin.php:293 includes/class-admin.php:348
 msgid "Adding..."
-msgstr ""
+msgstr "قيد الإضافه..."
 
 #: includes/class-admin.php:295
 msgid "Are you sure you want to delete this area? This cannot be undone."
-msgstr ""
+msgstr "هل أنت متأكد أنك تريد حذف هذه المنطقة؟ لا يمكن التراجع عن هذا."
 
 #: includes/class-admin.php:297
 msgid "Copy first row value to all rows"
-msgstr ""
+msgstr "نسخ قيمة الصف الأول إلى جميع الصفوف"
 
 #: includes/class-admin.php:298
 msgid "Apply this value to all areas"
-msgstr ""
+msgstr "طبق هذه القيمة على جميع المجالات"
 
 #: includes/class-admin.php:299
 msgid "Copy {field} = {value} to all {count} areas?"
-msgstr ""
+msgstr "نسخة {field} = {value} لجميع المناطق {count}؟"
 
 #: includes/class-admin.php:300
 msgid "Apply {field} = {value} to all {count} areas?"
-msgstr ""
+msgstr "هل تطبق {field} = {value} على جميع {count} المناطق؟"
 
 #: includes/class-admin.php:302 includes/class-admin.php:308
 #: includes/class-admin.php:375 includes/class-i18n.php:210
 msgid "Delivery Price"
-msgstr ""
+msgstr "سعر التوصيل"
 
 #: includes/class-admin.php:303 includes/class-admin.php:309
 #: includes/class-admin.php:376 includes/class-i18n.php:211
 msgid "Express Fee"
-msgstr ""
+msgstr "رسوم الانتقال السريع"
 
 #: includes/class-admin.php:304 includes/class-admin.php:311
 #: includes/class-i18n.php:213
 msgid "Min. Order"
-msgstr ""
+msgstr "الحد الأدنى للترتيب"
 
 #: includes/class-admin.php:305 includes/class-admin.php:310
 #: includes/class-admin.php:377 includes/class-i18n.php:212
 msgid "Delivery Notes"
-msgstr ""
+msgstr "وصول التسليم"
 
 #: includes/class-admin.php:307 includes/class-checkout.php:527
 #: includes/class-checkout.php:575 includes/class-i18n.php:209
 msgid "Area"
-msgstr ""
+msgstr "المنطقة"
 
 #: includes/class-admin.php:312 includes/class-admin.php:357
 #: includes/class-i18n.php:214
 msgid "Status"
-msgstr ""
+msgstr "الحالة"
 
 #: includes/class-admin.php:313 includes/class-admin.php:358
 msgid "Actions"
-msgstr ""
+msgstr "الإجراءات"
 
 #: includes/class-admin.php:315 includes/class-admin.php:350
 msgid "Enabled"
-msgstr ""
+msgstr "تمكين"
 
 #: includes/class-admin.php:316 includes/class-admin.php:351
 msgid "Disabled"
-msgstr ""
+msgstr "معطل"
 
 #: includes/class-admin.php:318 includes/class-ajax.php:329
 #: includes/class-ajax.php:380
 msgid "Area name is required (at least one language)."
-msgstr ""
+msgstr "اسم المنطقة مطلوب (على الأقل لغة واحدة)."
 
 #: includes/class-admin.php:320 includes/class-admin.php:353
 msgid "Drag to reorder"
-msgstr ""
+msgstr "اسحب لإعادة ترتيب"
 
 #: includes/class-admin.php:322
 msgid "Enabled by default"
-msgstr ""
+msgstr "ممكن افتراضيا"
 
 #: includes/class-admin.php:324 includes/class-admin.php:354
 msgid "Name (AR)"
-msgstr ""
+msgstr "الاسم (أركنساس)"
 
 #: includes/class-admin.php:325 includes/class-admin.php:355
 msgid "Name (EN)"
-msgstr ""
+msgstr "الاسم (بالإنجليزية)"
 
 #: includes/class-admin.php:326
 msgid "Notes (AR)"
-msgstr ""
+msgstr "ملاحظات (AR)"
 
 #: includes/class-admin.php:327
 msgid "Notes (EN)"
-msgstr ""
+msgstr "ملاحظات (بالإنجليزية)"
 
 #: includes/class-admin.php:339
 msgid "No cities for this country. Click \"Add City\" to create the first one."
-msgstr ""
+msgstr "لا مدن لهذا البلد. انقر على \"إضافة المدينة\" لإنشاء الأولى."
 
 #: includes/class-admin.php:345
 msgid "Add City"
-msgstr ""
+msgstr "إضافة مدينة"
 
 #: includes/class-admin.php:349
 msgid ""
 "Are you sure you want to delete this city and all its areas? This cannot be "
 "undone."
 msgstr ""
+"هل أنت متأكد أنك تريد حذف هذه المدينة وكل مناطقها؟ لا يمكن التراجع عن هذا."
 
 #: includes/class-admin.php:352 includes/class-ajax.php:125
 #: includes/class-ajax.php:162
 msgid "City name is required (at least one language)."
-msgstr ""
+msgstr "اسم المدينة مطلوب (على الأقل لغة واحدة)."
 
 #: includes/class-admin.php:356 includes/class-checkout.php:520
 #: includes/class-checkout.php:569 includes/class-i18n.php:217
 msgid "City"
-msgstr ""
+msgstr "المدينة"
 
 #: includes/class-admin.php:365
 msgid "Uploading..."
-msgstr ""
+msgstr "تحميل ..."
 
 #: includes/class-admin.php:366
 msgid "Importing..."
-msgstr ""
+msgstr "جاري الاستيراد ..."
 
 #: includes/class-admin.php:368
 msgid "Please select a CSV file."
-msgstr ""
+msgstr "يرجى اختيار ملف CSV."
 
 #: includes/class-admin.php:369
 msgid "Map Columns"
-msgstr ""
+msgstr "أعمدة الخرائط"
 
 #: includes/class-admin.php:371 templates/admin-import-page.php:154
 msgid "Back"
-msgstr ""
+msgstr "رجوع"
 
 #: includes/class-admin.php:372
 msgid "-- Skip --"
-msgstr ""
+msgstr "-- تخطي --"
 
 #: includes/class-admin.php:373
 msgid "English Name"
-msgstr ""
+msgstr "الإسم بالإنجليزية"
 
 #: includes/class-admin.php:374
 msgid "Arabic Name"
-msgstr ""
+msgstr "الاسم باللغة العربية"
 
 #: includes/class-admin.php:378
 msgid "Minimum Order"
-msgstr ""
+msgstr "الحد الأدنى للترتيب"
 
 #: includes/class-admin.php:379
 msgid "City Reference"
-msgstr ""
+msgstr "مرجع المدينة"
 
 #: includes/class-admin.php:380 templates/admin-import-page.php:129
 msgid "By City ID"
-msgstr ""
+msgstr "حسب هوية المدينة"
 
 #: includes/class-admin.php:381 templates/admin-import-page.php:130
 msgid "By English City Name"
-msgstr ""
+msgstr "حسب اسم المدينة الإنجليزي"
 
 #: includes/class-admin.php:382 templates/admin-import-page.php:131
 msgid "By Arabic City Name"
-msgstr ""
+msgstr "حسب اسم المدينة العربية"
 
 #: includes/class-admin.php:383 templates/admin-import-page.php:142
 msgid "CSV Column"
-msgstr ""
+msgstr "عمود CSV"
 
 #: includes/class-admin.php:384 templates/admin-import-page.php:143
 msgid "Map To"
-msgstr ""
+msgstr "خريطة إلى"
 
 #: includes/class-admin.php:385 templates/admin-import-page.php:144
 msgid "Preview"
-msgstr ""
+msgstr "معاينة"
 
 #: includes/class-ajax-import.php:35 includes/class-ajax.php:53
 msgid "Security verification failed. Please refresh the page and try again."
-msgstr ""
+msgstr "فشل التحقق الأمني. يرجى تحديث الصفحة والمحاولة مرة أخرى."
 
 #: includes/class-ajax-import.php:42 includes/class-ajax.php:60
 msgid "You do not have permission to perform this action."
-msgstr ""
+msgstr "ليس لديك الصلاحية لتنفيذ هذا الإجراء."
 
 #: includes/class-ajax-import.php:61
 msgid "No file was uploaded."
-msgstr ""
+msgstr "لم يتم تحميل أي ملف."
 
 #: includes/class-ajax-import.php:68
 msgid "File size exceeds the 2 MB limit."
-msgstr ""
+msgstr "حجم الملف يتجاوز الحد الأقصى 2 ميجابايت."
 
 #: includes/class-ajax-import.php:78
 msgid "Invalid file type. Please upload a CSV file."
-msgstr ""
+msgstr "نوع الملف غير صالح. يرجى رفع ملف CSV."
 
 #: includes/class-ajax-import.php:96
 msgid "Failed to save uploaded file."
-msgstr ""
+msgstr "فشل في حفظ الملف المرفوع."
 
 #: includes/class-ajax-import.php:103
 msgid "Could not read CSV file."
-msgstr ""
+msgstr "لم أتمكن من قراءة ملف CSV."
 
 #: includes/class-ajax-import.php:110
 msgid "CSV file appears to be empty."
-msgstr ""
+msgstr "ملف CSV يبدو فارغا."
 
 #: includes/class-ajax-import.php:134
 msgid "File uploaded successfully. Map the columns below."
-msgstr ""
+msgstr "تم رفع الملف بنجاح. رسم خريطة الأعمدة أدناه."
 
 #: includes/class-ajax-import.php:157
 msgid "Upload session expired. Please upload the file again."
-msgstr ""
+msgstr "انتهت صلاحية جلسة الرفع. يرجى رفع الملف مرة أخرى."
 
 #: includes/class-ajax-import.php:167 includes/class-ajax.php:82
 #: includes/class-ajax.php:154
 msgid "Invalid country code."
-msgstr ""
+msgstr "رمز الدولة غير صالح."
 
 #: includes/class-ajax-import.php:175
 msgid "Invalid import type."
-msgstr ""
+msgstr "نوع الاستيراد غير صحيح."
 
 #: includes/class-ajax-import.php:185
 msgid "Invalid column mapping."
-msgstr ""
+msgstr "تعيين أعمدة غير صحيح."
 
 #. translators: 1: success count 2: error count
 #: includes/class-ajax-import.php:232
 #, php-format
 msgid "Import complete: %1$d succeeded, %2$d failed."
-msgstr ""
+msgstr "اكتمل الاستيراد: %1$d نجحت، %2$d فشلت."
 
 #: includes/class-ajax.php:112 includes/class-ajax.php:195
 #: includes/class-ajax.php:217 includes/class-ajax.php:277
 #: includes/class-ajax.php:366 includes/class-ajax.php:507
 #: includes/class-checkout.php:278
 msgid "Invalid city ID."
-msgstr ""
+msgstr "هوية المدينة غير صالحة."
 
 #: includes/class-ajax.php:117 includes/class-ajax.php:282
 #: includes/class-ajax.php:371
 msgid "City not found in the database."
-msgstr ""
+msgstr "المدينة غير موجودة في قاعدة البيانات."
 
 #: includes/class-ajax.php:133
 msgid "City saved successfully."
-msgstr ""
+msgstr "تصدي سيتي بنجاح."
 
 #: includes/class-ajax.php:138 includes/class-ajax.php:351
 msgid "Failed to save. Please try again."
-msgstr ""
+msgstr "فشل في الحفظ. يرجى المحاولة مرة أخرى."
 
 #: includes/class-ajax.php:176
 msgid "City added successfully."
-msgstr ""
+msgstr "أضاف سيتي بنجاح."
 
 #: includes/class-ajax.php:181
 msgid "Failed to add city. Please try again."
-msgstr ""
+msgstr "فشلت في إضافة المدينة. يرجى المحاولة مرة أخرى."
 
 #: includes/class-ajax.php:201
 msgid "City and all its areas deleted successfully."
-msgstr ""
+msgstr "تم حذف المدينة وجميع مناطقها بنجاح."
 
 #: includes/class-ajax.php:203 includes/class-ajax.php:437
 msgid "Failed to delete. Please try again."
-msgstr ""
+msgstr "فشل في الحذف. يرجى المحاولة مرة أخرى."
 
 #: includes/class-ajax.php:227
 msgid "City enabled."
-msgstr ""
+msgstr "مفعل المدينة."
 
 #: includes/class-ajax.php:228
 msgid "City disabled."
-msgstr ""
+msgstr "المدينة معطلة."
 
 #: includes/class-ajax.php:232 includes/class-ajax.php:466
 msgid "Failed to toggle status. Please try again."
-msgstr ""
+msgstr "فشل في تفعيل الحالة. يرجى المحاولة مرة أخرى."
 
 #: includes/class-ajax.php:247 includes/class-ajax.php:481
 msgid "No reorder data provided."
-msgstr ""
+msgstr "لم يتم تقديم بيانات إعادة الطلب."
 
 #: includes/class-ajax.php:260 includes/class-ajax.php:494
 msgid "New order saved."
-msgstr ""
+msgstr "تم حفظ النظام الجديد."
 
 #: includes/class-ajax.php:315 includes/class-ajax.php:429
 #: includes/class-ajax.php:451
 msgid "Invalid area ID."
-msgstr ""
+msgstr "معرف المنطقة غير صالح."
 
 #: includes/class-ajax.php:320
 msgid "Area not found in the database."
-msgstr ""
+msgstr "المنطقة غير موجودة في قاعدة البيانات."
 
 #: includes/class-ajax.php:346
 msgid "Changes saved successfully."
-msgstr ""
+msgstr "تم حفظ التغييرات."
 
 #: includes/class-ajax.php:410
 msgid "Area added successfully."
-msgstr ""
+msgstr "أضافت المنطقة بنجاح."
 
 #: includes/class-ajax.php:415
 msgid "Failed to add area. Please try again."
-msgstr ""
+msgstr "فشلت في إضافة مساحة. يرجى المحاولة مرة أخرى."
 
 #: includes/class-ajax.php:435
 msgid "Area deleted successfully."
-msgstr ""
+msgstr "تم حذف المنطقة بنجاح."
 
 #: includes/class-ajax.php:461
 msgid "Area enabled."
-msgstr ""
+msgstr "المنطقة مفعلة."
 
 #: includes/class-ajax.php:462
 msgid "Area disabled."
-msgstr ""
+msgstr "المنطقة معطلة."
 
 #: includes/class-ajax.php:527
 msgid "Field name not allowed."
-msgstr ""
+msgstr "اسم الحقل غير مسموح به."
 
 #. translators: %d: number of areas updated
 #: includes/class-ajax.php:534
 #, php-format
 msgid "Value applied to %d areas."
-msgstr ""
+msgstr "القيمة المطبقة على %d المجالات."
 
 #: includes/class-checkout.php:68 includes/class-checkout.php:416
 #: includes/class-checkout.php:615 includes/class-i18n.php:218
 msgid "Delivery Area"
-msgstr ""
+msgstr "منطقة التسليم"
 
 #: includes/class-checkout.php:78 includes/class-checkout.php:533
 #: includes/class-checkout.php:580 includes/class-i18n.php:219
 msgid "Delivery Type"
-msgstr ""
+msgstr "طريقة التوصيل"
 
 #: includes/class-checkout.php:83 includes/class-checkout.php:254
 #: includes/class-checkout.php:509 includes/class-checkout.php:561
 #: includes/class-checkout.php:610 includes/class-i18n.php:220
 msgid "Standard Delivery"
-msgstr ""
+msgstr "التوصيل القياسي"
 
 #: includes/class-checkout.php:84 includes/class-i18n.php:221
 msgid "Express Delivery (extra fee)"
-msgstr ""
+msgstr "التوصيل السريع (رسوم إضافية)"
 
 #: includes/class-checkout.php:130
 msgctxt "required field"
 msgid "required"
-msgstr ""
+msgstr "مطلوب"
 
 #: includes/class-checkout.php:163 includes/class-checkout.php:252
 msgid "-- Select area --"
-msgstr ""
+msgstr "-- اختر المنطقة --"
 
 #: includes/class-checkout.php:173
 msgid "Search for an area..."
-msgstr ""
+msgstr "ابحث عن منطقة..."
 
 #: includes/class-checkout.php:175
 msgid "Search areas"
-msgstr ""
+msgstr "مناطق البحث"
 
 #: includes/class-checkout.php:205 includes/class-checkout.php:253
 msgid "No results match your search"
-msgstr ""
+msgstr "لا توجد نتائج تطابق بحثك"
 
 #: includes/class-checkout.php:257
 msgid "Delivery area is a required field."
-msgstr ""
+msgstr "منطقة التسليم هي حقل إلزامي."
 
 #: includes/class-checkout.php:272 includes/class-checkout.php:297
 msgid "Security verification failed."
-msgstr ""
+msgstr "فشل التحقق الأمني."
 
 #. translators: %s: area name
 #: includes/class-checkout.php:363
 #, php-format
 msgid "Express delivery fee - %s"
-msgstr ""
+msgstr "رسوم التوصيل السريع - %s"
 
 #. translators: %s: area name
 #: includes/class-checkout.php:370
 #, php-format
 msgid "Delivery fee - %s"
-msgstr ""
+msgstr "رسوم التوصيل - %s"
 
 #: includes/class-checkout.php:417
 msgid "is a required field."
-msgstr ""
+msgstr "هو حقل مطلوب."
 
 #: includes/class-checkout.php:428
 msgid "The selected area was not found. Please refresh the page and try again."
 msgstr ""
+"لم يتم العثور على المنطقة المختارة. يرجى تحديث الصفحة والمحاولة مرة أخرى."
 
 #. translators: %s: area name
 #: includes/class-checkout.php:439
 #, php-format
 msgid "Area %s is currently unavailable for delivery."
-msgstr ""
+msgstr "المنطقة %s غير متاحة حاليا للتوصيل."
 
 #: includes/class-checkout.php:514 includes/class-checkout.php:565
 msgid "Delivery Details"
-msgstr ""
+msgstr "تفاصيل التسليم"
 
 #: includes/class-checkout.php:539 includes/class-checkout.php:585
 #: includes/class-i18n.php:222
 msgid "Delivery Fee"
-msgstr ""
+msgstr "رسوم التوصيل"
 
 #: includes/class-checkout.php:618
 msgid "City:"
-msgstr ""
+msgstr "المدينة :"
 
 #: includes/class-checkout.php:624
 msgid "Area:"
-msgstr ""
+msgstr "المنطقة:"
 
 #: includes/class-checkout.php:629
 msgid "Delivery Type:"
-msgstr ""
+msgstr "طريقة التوصيل:"
 
 #: includes/class-checkout.php:634
 msgid "Fee:"
-msgstr ""
+msgstr "الرسوم:"
 
 #: includes/class-csv-importer.php:88 includes/class-csv-importer.php:156
 msgid "Could not open CSV file."
-msgstr ""
+msgstr "لم أتمكن من فتح ملف CSV."
 
 #. translators: %d: row number
 #: includes/class-csv-importer.php:116
 #, php-format
 msgid "Row %d: No city name provided. Skipped."
-msgstr ""
+msgstr "الصف %d: لم يتم ذكر اسم المدينة. تم تخطيه."
 
 #. translators: %d: row number
 #: includes/class-csv-importer.php:141 includes/class-csv-importer.php:264
 #, php-format
 msgid "Row %d: Database insert failed."
-msgstr ""
+msgstr "الصف %d: فشل إدخال قاعدة البيانات."
 
 #. translators: %d: row number
 #: includes/class-csv-importer.php:217
 #, php-format
 msgid "Row %d: No area name provided. Skipped."
-msgstr ""
+msgstr "الصف %d: لم يتم ذكر اسم المنطقة. تم تخطيه."
 
 #. translators: 1: row number 2: city reference value
 #: includes/class-csv-importer.php:229
 #, php-format
 msgid "Row %1$d: Could not resolve city \"%2$s\". Skipped."
-msgstr ""
+msgstr "الصف %1$d: لم أتمكن من حل المدينة \"%2$s\". تم تخطيه."
 
 #: includes/class-i18n.php:205 templates/admin-page.php:19
 msgid "Delivery Areas Manager"
-msgstr ""
+msgstr "مدير مناطق التسليم"
 
 #: includes/class-i18n.php:206 templates/admin-page.php:22
 msgid "Select a city to view and edit its delivery areas."
-msgstr ""
+msgstr "اختر مدينة لعرض وتحرير مناطق التسليم الخاصة بها."
 
 #: kuwait-delivery-manager.php:96
 msgid ""
 "WooCommerce is not active. The delivery areas manager will still work, but "
 "checkout integration requires WooCommerce."
 msgstr ""
+"ووكوميرس غير نشط. مدير منطقة التوصيل سيظل يعمل، لكن دمج الدفع يتطلب "
+"WooCommerce."
 
 #: templates/admin-cities-page.php:22
 msgid "Manage delivery cities for each country."
-msgstr ""
+msgstr "إدارة مدن التوصيل لكل دولة."
 
 #: templates/admin-cities-page.php:28 templates/admin-page.php:28
 msgid "Country:"
-msgstr ""
+msgstr "الدولة :"
 
 #: templates/admin-cities-page.php:44
 msgid "Loading cities..."
-msgstr ""
+msgstr "تحميل المدن..."
 
 #: templates/admin-import-page.php:18
 msgid "Import from CSV"
-msgstr ""
+msgstr "استيراد من CSV"
 
 #: templates/admin-import-page.php:21
 msgid "Upload a CSV file to bulk-import cities or areas."
-msgstr ""
+msgstr "رفع ملف CSV إلى مدن أو مناطق استيراد جماعي."
 
 #: templates/admin-import-page.php:32
 msgid "Step 1: Upload File"
-msgstr ""
+msgstr "الخطوة 1: رفع الملف"
 
 #: templates/admin-import-page.php:37
 msgid "Country"
-msgstr ""
+msgstr "الدولة"
 
 #: templates/admin-import-page.php:50
 msgid "Import Type"
-msgstr ""
+msgstr "نوع الاستيراد"
 
 #: templates/admin-import-page.php:70
 msgid "Base Delivery Price"
-msgstr ""
+msgstr "سعر التسليم الأساسي"
 
 #: templates/admin-import-page.php:78
 msgid "Base Express Fee"
-msgstr ""
+msgstr "رسوم القاعدة السريعة"
 
 #: templates/admin-import-page.php:86
 msgid "Base Minimum Order"
-msgstr ""
+msgstr "الحد الأدنى الأساسي للترتيب"
 
 #: templates/admin-import-page.php:98
 msgid "CSV File"
-msgstr ""
+msgstr "ملف CSV"
 
 #: templates/admin-import-page.php:102
 msgid "Maximum 2 MB. The first row must contain column headers."
-msgstr ""
+msgstr "الحد الأقصى 2 ميجابايت. يجب أن يحتوي الصف الأول على رؤوس الأعمدة."
 
 #: templates/admin-import-page.php:109
 msgid "Upload & Continue"
-msgstr ""
+msgstr "الرفع والاستمرار"
 
 #: templates/admin-import-page.php:120
 msgid "Step 2: Map Columns"
-msgstr ""
+msgstr "الخطوة 2: أعمدة الخرائط"
 
 #: templates/admin-import-page.php:126
 msgid "City Matching Mode"
-msgstr ""
+msgstr "وضع مطابقة المدينة"
 
 #: templates/admin-import-page.php:164
 msgid "Import Results"
-msgstr ""
+msgstr "نتائج الاستيراد"
 
 #: templates/admin-page.php:59
 msgid "City areas"
-msgstr ""
+msgstr "مناطق المدينة"
 
 #: templates/admin-page.php:63
 msgid "Loading data..."
-msgstr ""
+msgstr "جاري تحميل البيانات..."
 
 #: templates/admin-settings-page.php:13
 msgid "Delivery Manager Settings"
-msgstr ""
+msgstr "إعدادات مدير التسليم"
 
 #: templates/admin-settings-page.php:20
 msgid "Save Settings"
-msgstr ""
+msgstr "حفظ الإعدادات"
 
 #. Plugin Name of the plugin/theme
 msgid "Woocommerce Kuwait Delivery Manager"
-msgstr ""
+msgstr "مدير توصيل ووكومرس الكويت"
 
 #. Plugin URI of the plugin/theme
 #. Author URI of the plugin/theme
 msgid "https://ahmedsafaa.com/"
-msgstr ""
+msgstr "https://ahmedsafaa.com/"
 
 #. Description of the plugin/theme
 msgid ""
@@ -718,7 +724,10 @@ msgid ""
 "WooCommerce admin dashboard. Full bilingual (AR/EN) support, WooCommerce "
 "checkout integration, CSV import, inline editing, WPML & Polylang compatible."
 msgstr ""
+"إدارة مناطق التسليم والتسعير عبر عدة دول من لوحة تحكم إدارة WooCommerce. دعم "
+"كامل للغتين (AR/EN)، تكامل لاستلام WooCommerce، استيراد CSV، تحرير داخلي، "
+"متوافق مع WPML وPolylang."
 
 #. Author of the plugin/theme
 msgid "Ahmed Safaa"
-msgstr ""
+msgstr "احمد صفاء"
