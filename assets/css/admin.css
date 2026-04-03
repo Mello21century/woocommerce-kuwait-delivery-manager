@@ -1,0 +1,968 @@
+/*
+ * Kuwait Delivery Manager — Admin Stylesheet
+ * RTL layout, modern card-based design, inline editing, toggle switches.
+ */
+
+/* =========================================================================
+   1. CSS Custom Properties (design tokens)
+   ========================================================================= */
+:root {
+  --kdm-primary:       #2271b1;
+  --kdm-primary-dark:  #135e96;
+  --kdm-primary-light: #d0e6f7;
+  --kdm-success:       #00a32a;
+  --kdm-success-bg:    #edfaef;
+  --kdm-danger:        #d63638;
+  --kdm-danger-bg:     #fce8e8;
+  --kdm-warning:       #dba617;
+  --kdm-warning-bg:    #fef8eb;
+  --kdm-sidebar-bg:    #1e2327;
+  --kdm-sidebar-hover: #2c3338;
+  --kdm-sidebar-active:#2271b1;
+  --kdm-sidebar-text:  #c3c4c7;
+  --kdm-sidebar-title: #ffffff;
+  --kdm-border:        #dcdcde;
+  --kdm-bg:            #f6f7f7;
+  --kdm-white:         #ffffff;
+  --kdm-text:          #1d2327;
+  --kdm-text-muted:    #646970;
+  --kdm-radius:        6px;
+  --kdm-radius-sm:     4px;
+  --kdm-shadow:        0 1px 4px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.06);
+  --kdm-shadow-deep:   0 4px 16px rgba(0,0,0,.15);
+  --kdm-transition:    .18s ease;
+  --kdm-sidebar-width: 220px;
+  --kdm-font-ar:       'Segoe UI', Tahoma, 'Arial Unicode MS', Arial, sans-serif;
+}
+
+/* =========================================================================
+   2. Page wrapper
+   ========================================================================= */
+.kdm-wrap {
+  font-family: var(--kdm-font-ar);
+  color: var(--kdm-text);
+  direction: rtl;
+  text-align: right;
+}
+
+/* =========================================================================
+   3. Page header
+   ========================================================================= */
+.kdm-page-header {
+  margin: 20px 0 24px;
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--kdm-border);
+}
+
+.kdm-page-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--kdm-text);
+  margin: 0 0 6px;
+  line-height: 1.3;
+}
+
+.kdm-page-title .dashicons {
+  color: var(--kdm-primary);
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+}
+
+.kdm-page-subtitle {
+  margin: 0;
+  color: var(--kdm-text-muted);
+  font-size: 13px;
+}
+
+/* =========================================================================
+   4. Two-column layout
+   ========================================================================= */
+.kdm-layout {
+  display: flex;
+  flex-direction: row-reverse; /* RTL: sidebar on right, content on left */
+  gap: 20px;
+  align-items: flex-start;
+  min-height: 500px;
+}
+
+/* =========================================================================
+   5. Governorates sidebar (RIGHT column)
+   ========================================================================= */
+.kdm-sidebar {
+  width: var(--kdm-sidebar-width);
+  flex-shrink: 0;
+  background: var(--kdm-sidebar-bg);
+  border-radius: var(--kdm-radius);
+  overflow: hidden;
+  box-shadow: var(--kdm-shadow-deep);
+  position: sticky;
+  top: 32px;
+}
+
+.kdm-sidebar-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+.kdm-sidebar-header .dashicons {
+  color: var(--kdm-sidebar-text);
+  opacity: .7;
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.kdm-sidebar-header h2 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kdm-sidebar-text);
+  text-transform: uppercase;
+  letter-spacing: .8px;
+}
+
+/* Governorate list */
+.kdm-gov-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px 0;
+}
+
+.kdm-gov-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 18px;
+  cursor: pointer;
+  transition: background var(--kdm-transition), border-color var(--kdm-transition);
+  border-right: 3px solid transparent;
+  border-left: none;
+  position: relative;
+  user-select: none;
+}
+
+.kdm-gov-item:hover {
+  background: var(--kdm-sidebar-hover);
+  border-right-color: rgba(255,255,255,.25);
+}
+
+.kdm-gov-item.active {
+  background: rgba(34, 113, 177, .18);
+  border-right-color: var(--kdm-primary);
+}
+
+.kdm-gov-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255,255,255,.3);
+  flex-shrink: 0;
+  transition: background var(--kdm-transition);
+}
+
+.kdm-gov-item.active .kdm-gov-dot {
+  background: var(--kdm-primary);
+  box-shadow: 0 0 6px rgba(34,113,177,.7);
+}
+
+.kdm-gov-name {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--kdm-sidebar-text);
+  transition: color var(--kdm-transition);
+}
+
+.kdm-gov-item.active .kdm-gov-name,
+.kdm-gov-item:hover .kdm-gov-name {
+  color: var(--kdm-sidebar-title);
+}
+
+.kdm-gov-count {
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(255,255,255,.1);
+  color: var(--kdm-sidebar-text);
+  border-radius: 10px;
+  padding: 1px 7px;
+  min-width: 20px;
+  text-align: center;
+  display: none; /* shown by JS after first load */
+}
+
+.kdm-gov-count.visible {
+  display: inline-block;
+}
+
+.kdm-gov-arrow {
+  color: rgba(255,255,255,.25);
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+  transition: transform var(--kdm-transition), color var(--kdm-transition);
+}
+
+.kdm-gov-item.active .kdm-gov-arrow {
+  color: var(--kdm-primary);
+  transform: translateX(-3px);
+}
+
+/* Sidebar footer */
+.kdm-sidebar-footer {
+  padding: 12px 18px;
+  border-top: 1px solid rgba(255,255,255,.07);
+  font-size: 11px;
+  color: rgba(255,255,255,.35);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.kdm-sidebar-footer .dashicons {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+/* =========================================================================
+   6. Content area (LEFT column)
+   ========================================================================= */
+.kdm-content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* =========================================================================
+   7. Content header (governorate title + Add button)
+   ========================================================================= */
+.kdm-content-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 16px 20px;
+  background: var(--kdm-white);
+  border-radius: var(--kdm-radius);
+  box-shadow: var(--kdm-shadow);
+}
+
+.kdm-gov-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--kdm-text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.kdm-gov-title .dashicons {
+  color: var(--kdm-primary);
+  font-size: 20px;
+  width: 20px;
+  height: 20px;
+}
+
+.kdm-add-btn {
+  display: flex !important;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px !important;
+  padding: 6px 14px !important;
+  height: auto !important;
+  border-radius: var(--kdm-radius-sm) !important;
+}
+
+.kdm-add-btn .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+}
+
+/* =========================================================================
+   8. Areas table
+   ========================================================================= */
+.kdm-table-wrap {
+  background: var(--kdm-white);
+  border-radius: var(--kdm-radius);
+  box-shadow: var(--kdm-shadow);
+  overflow: hidden;
+}
+
+.kdm-areas-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  table-layout: fixed;
+}
+
+.kdm-areas-table thead th {
+  background: #f8f9fa;
+  color: var(--kdm-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .6px;
+  padding: 12px 14px;
+  border-bottom: 2px solid var(--kdm-border);
+  white-space: nowrap;
+  text-align: right;
+}
+
+.kdm-areas-table tbody tr {
+  border-bottom: 1px solid #f0f0f1;
+  transition: background var(--kdm-transition);
+}
+
+.kdm-areas-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.kdm-areas-table tbody tr:hover {
+  background: #f9f9fb;
+}
+
+.kdm-areas-table tbody td {
+  padding: 11px 14px;
+  vertical-align: middle;
+  text-align: right;
+  color: var(--kdm-text);
+}
+
+/* Column widths */
+.kdm-col-sort    { width: 40px;  text-align: center !important; }
+.kdm-col-name    { width: auto; min-width: 120px; }
+.kdm-col-price   { width: 110px; }
+.kdm-col-express { width: 130px; }
+.kdm-col-notes   { width: auto; min-width: 100px; }
+.kdm-col-min     { width: 120px; }
+.kdm-col-status  { width: 100px; text-align: center !important; }
+.kdm-col-actions { width: 160px; white-space: nowrap; }
+
+/* Price cells */
+.kdm-price {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--kdm-primary-dark);
+  font-size: 13px;
+}
+
+.kdm-empty-val {
+  color: var(--kdm-text-muted);
+  font-style: normal;
+}
+
+/* =========================================================================
+   9. Sort handle
+   ========================================================================= */
+.kdm-sort-handle {
+  cursor: grab !important;
+  color: #b3b8bc;
+  text-align: center;
+}
+
+.kdm-sort-handle:active {
+  cursor: grabbing !important;
+}
+
+.kdm-sort-handle .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.kdm-sort-handle:hover .dashicons {
+  color: var(--kdm-primary);
+}
+
+/* Sortable placeholder row */
+.kdm-sort-placeholder {
+  background: var(--kdm-primary-light) !important;
+  border: 2px dashed var(--kdm-primary) !important;
+  height: 46px;
+}
+
+/* Dragging row style */
+.kdm-area-row.ui-sortable-helper {
+  background: var(--kdm-white) !important;
+  box-shadow: var(--kdm-shadow-deep);
+  border-radius: var(--kdm-radius-sm);
+  opacity: .92;
+}
+
+/* =========================================================================
+   10. Inline edit inputs
+   ========================================================================= */
+.kdm-edit-input {
+  width: 100%;
+  padding: 6px 9px;
+  font-size: 13px;
+  border: 1px solid var(--kdm-border);
+  border-radius: var(--kdm-radius-sm);
+  background: var(--kdm-white);
+  color: var(--kdm-text);
+  font-family: var(--kdm-font-ar);
+  direction: rtl;
+  transition: border-color var(--kdm-transition), box-shadow var(--kdm-transition);
+  box-sizing: border-box;
+}
+
+.kdm-edit-input:focus {
+  outline: none;
+  border-color: var(--kdm-primary);
+  box-shadow: 0 0 0 2px var(--kdm-primary-light);
+}
+
+.kdm-edit-input.kdm-input-error {
+  border-color: var(--kdm-danger);
+  box-shadow: 0 0 0 2px rgba(214,54,56,.15);
+}
+
+input[type="number"].kdm-edit-input {
+  text-align: left; /* LTR for numeric values */
+  direction: ltr;
+}
+
+/* Row in editing mode */
+.kdm-area-row.kdm-row-editing {
+  background: #fafbff !important;
+}
+
+/* =========================================================================
+   11. Action buttons
+   ========================================================================= */
+.kdm-col-actions .button {
+  margin-inline-start: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px !important;
+  padding: 4px 10px !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+}
+
+.kdm-col-actions .button .dashicons {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.kdm-col-actions .button:first-child {
+  margin-inline-start: 0;
+}
+
+/* Delete button — subtle destructive style */
+.kdm-delete-btn {
+  color: var(--kdm-danger) !important;
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  padding: 4px 6px !important;
+}
+
+.kdm-delete-btn:hover {
+  color: #a00 !important;
+  background: var(--kdm-danger-bg) !important;
+  border-color: var(--kdm-danger) !important;
+}
+
+/* =========================================================================
+   12. Toggle switch
+   ========================================================================= */
+.kdm-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  padding: 0;
+  position: relative;
+}
+
+.kdm-toggle:focus {
+  outline: 2px solid var(--kdm-primary);
+  outline-offset: 2px;
+  border-radius: 20px;
+}
+
+.kdm-toggle-knob {
+  display: block;
+  width: 38px;
+  height: 20px;
+  border-radius: 10px;
+  background: #c3c4c7;
+  position: relative;
+  transition: background var(--kdm-transition);
+  flex-shrink: 0;
+}
+
+.kdm-toggle-knob::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  right: 3px; /* RTL: knob starts on right when OFF */
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--kdm-white);
+  box-shadow: 0 1px 3px rgba(0,0,0,.25);
+  transition: transform var(--kdm-transition), right var(--kdm-transition);
+}
+
+.kdm-toggle-on .kdm-toggle-knob {
+  background: var(--kdm-success);
+}
+
+.kdm-toggle-on .kdm-toggle-knob::after {
+  right: auto;
+  left: 3px; /* RTL: knob moves to left when ON */
+}
+
+.kdm-toggle-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--kdm-text-muted);
+  white-space: nowrap;
+}
+
+.kdm-toggle-on .kdm-toggle-label {
+  color: var(--kdm-success);
+}
+
+.kdm-toggle:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+
+/* =========================================================================
+   13. New area row
+   ========================================================================= */
+#kdm-new-area-row {
+  background: #f0f6ff !important;
+  animation: kdmFadeIn .25s ease;
+}
+
+#kdm-new-area-row td {
+  padding: 8px 14px !important;
+}
+
+.kdm-new-status {
+  font-size: 11px;
+  color: var(--kdm-text-muted);
+  font-style: italic;
+}
+
+/* =========================================================================
+   14. Notices
+   ========================================================================= */
+.kdm-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 16px;
+  padding: 12px 16px;
+  border-radius: var(--kdm-radius);
+  font-size: 13px;
+  font-weight: 500;
+  animation: kdmSlideIn .2s ease;
+}
+
+.kdm-notice-success {
+  background: var(--kdm-success-bg);
+  color: #00651a;
+  border-right: 4px solid var(--kdm-success);
+}
+
+.kdm-notice-error {
+  background: var(--kdm-danger-bg);
+  color: #9b1c1e;
+  border-right: 4px solid var(--kdm-danger);
+}
+
+.kdm-notice-warning {
+  background: var(--kdm-warning-bg);
+  color: #7a5800;
+  border-right: 4px solid var(--kdm-warning);
+}
+
+.kdm-notice .dashicons {
+  font-size: 18px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.kdm-notice p {
+  margin: 0;
+  flex: 1;
+}
+
+.kdm-notice-dismiss {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0 4px;
+  color: inherit;
+  opacity: .6;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.kdm-notice-dismiss:hover { opacity: 1; }
+
+.kdm-notice-dismiss .dashicons {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+/* =========================================================================
+   15. Loading states
+   ========================================================================= */
+.kdm-loading-initial,
+.kdm-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  gap: 16px;
+  background: var(--kdm-white);
+  border-radius: var(--kdm-radius);
+  box-shadow: var(--kdm-shadow);
+}
+
+.kdm-loading-initial p,
+.kdm-loading p {
+  margin: 0;
+  color: var(--kdm-text-muted);
+  font-size: 14px;
+}
+
+/* Custom spinner — avoids depending on WP's .spinner being visible */
+.kdm-spinner {
+  display: inline-block;
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--kdm-primary-light);
+  border-top-color: var(--kdm-primary);
+  border-radius: 50%;
+  animation: kdmSpin .7s linear infinite;
+}
+
+/* =========================================================================
+   16. Empty state
+   ========================================================================= */
+.kdm-empty-state {
+  background: var(--kdm-white);
+  border-radius: var(--kdm-radius);
+  box-shadow: var(--kdm-shadow);
+  padding: 48px 24px;
+  text-align: center;
+  color: var(--kdm-text-muted);
+  font-size: 14px;
+  margin-bottom: 16px;
+}
+
+.kdm-empty-state::before {
+  content: '📍';
+  display: block;
+  font-size: 36px;
+  margin-bottom: 12px;
+}
+
+/* =========================================================================
+   17. Row state animations
+   ========================================================================= */
+
+/* Green flash after save */
+@keyframes kdmSavedFlash {
+  0%   { background: #d4edda; }
+  100% { background: transparent; }
+}
+
+.kdm-row-saved {
+  animation: kdmSavedFlash 1.8s ease forwards;
+}
+
+/* Fade-out before delete */
+@keyframes kdmFadeOut {
+  to { opacity: 0; transform: scaleY(0); }
+}
+
+.kdm-row-deleting {
+  animation: kdmFadeOut .35s ease forwards;
+  overflow: hidden;
+}
+
+/* Fade-in for new rows */
+@keyframes kdmFadeIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Notice slide-in */
+@keyframes kdmSlideIn {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Spinner rotation */
+@keyframes kdmSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* =========================================================================
+   18. Bilingual UI — v1.2.0
+   ========================================================================= */
+
+/* --- Sidebar: stacked bilingual governorate names --- */
+.kdm-gov-names {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.kdm-gov-name-ar {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--kdm-sidebar-text);
+  line-height: 1.3;
+  transition: color var(--kdm-transition);
+}
+
+.kdm-gov-name-en {
+  font-size: 10px;
+  font-weight: 400;
+  color: rgba(195, 196, 199, .55);
+  line-height: 1.2;
+  letter-spacing: .3px;
+  transition: color var(--kdm-transition);
+  direction: ltr;
+  text-align: left;
+}
+
+.kdm-gov-item.active .kdm-gov-name-ar,
+.kdm-gov-item:hover  .kdm-gov-name-ar {
+  color: var(--kdm-sidebar-title);
+}
+
+.kdm-gov-item.active .kdm-gov-name-en,
+.kdm-gov-item:hover  .kdm-gov-name-en {
+  color: rgba(255,255,255,.55);
+}
+
+/* --- Table cell: stacked bilingual area name --- */
+.kdm-bilingual-view {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.kdm-name-ar {
+  font-weight: 500;
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+.kdm-name-en {
+  font-size: 11px;
+  color: var(--kdm-text-muted);
+  line-height: 1.2;
+  direction: ltr;
+  text-align: left;
+}
+
+/* --- Table cell: stacked bilingual notes --- */
+.kdm-notes-ar {
+  display: block;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.kdm-notes-en {
+  display: block;
+  font-size: 11px;
+  color: var(--kdm-text-muted);
+  direction: ltr;
+  text-align: left;
+  line-height: 1.3;
+  margin-top: 2px;
+}
+
+/* --- Textarea edit input --- */
+textarea.kdm-edit-input {
+  resize: vertical;
+  min-height: 58px;
+  line-height: 1.5;
+}
+
+/* --- Language-labelled inputs --- */
+.kdm-input-ar {
+  /* default RTL — no override needed */
+}
+
+.kdm-input-en {
+  direction: ltr;
+  text-align: left;
+  font-size: 12px;
+}
+
+/* --- Column header copy-to-all button --- */
+.kdm-copy-col-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-inline-start: 5px;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid rgba(100,105,112,.3);
+  border-radius: 3px;
+  background: rgba(255,255,255,.08);
+  color: var(--kdm-text-muted);
+  cursor: pointer;
+  vertical-align: middle;
+  line-height: 1;
+  transition: background var(--kdm-transition), color var(--kdm-transition), border-color var(--kdm-transition);
+}
+
+.kdm-copy-col-btn .dashicons {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
+}
+
+.kdm-copy-col-btn:hover {
+  background: var(--kdm-primary);
+  border-color: var(--kdm-primary);
+  color: #fff;
+}
+
+/* --- Price cell: input + push button wrapper (edit mode) --- */
+.kdm-price-edit-wrap {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.kdm-price-edit-wrap .kdm-edit-input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* --- Notes edit row: textarea + push button side by side --- */
+.kdm-notes-edit-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 5px;
+  margin-bottom: 5px;
+}
+
+.kdm-notes-edit-row:last-child { margin-bottom: 0; }
+
+.kdm-notes-edit-row textarea.kdm-edit-input {
+  flex: 1;
+}
+
+/* --- Notes copy-col button language label (small <em> inside button) --- */
+.kdm-copy-col-btn em {
+  font-style: normal;
+  font-size: 9px;
+  font-weight: 700;
+  margin-right: 1px;
+  vertical-align: middle;
+}
+
+/* --- Per-row push-to-all button --- */
+.kdm-push-val-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1px solid var(--kdm-border);
+  border-radius: var(--kdm-radius-sm);
+  background: var(--kdm-white);
+  color: var(--kdm-text-muted);
+  cursor: pointer;
+  transition: background var(--kdm-transition), color var(--kdm-transition), border-color var(--kdm-transition);
+}
+
+.kdm-push-val-btn .dashicons {
+  font-size: 14px;
+  width: 14px;
+  height: 14px;
+}
+
+.kdm-push-val-btn:hover {
+  background: var(--kdm-warning-bg);
+  border-color: var(--kdm-warning);
+  color: var(--kdm-warning);
+}
+
+/* =========================================================================
+   19. Responsive adjustments
+   ========================================================================= */
+@media (max-width: 960px) {
+  .kdm-layout {
+    flex-direction: column-reverse; /* Stack: content on top, sidebar below */
+    gap: 16px;
+  }
+
+  .kdm-sidebar {
+    width: 100%;
+    position: static;
+  }
+
+  .kdm-gov-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    padding: 10px;
+  }
+
+  .kdm-gov-item {
+    flex: 0 1 auto;
+    border-radius: var(--kdm-radius-sm);
+    border-right: none;
+    border-bottom: 2px solid transparent;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .kdm-gov-item.active {
+    border-bottom-color: var(--kdm-primary);
+  }
+
+  .kdm-gov-arrow { display: none; }
+
+  .kdm-col-notes,
+  .kdm-col-express {
+    display: none; /* hide on narrow screens */
+  }
+}
+
+@media (max-width: 640px) {
+  .kdm-col-min { display: none; }
+  .kdm-areas-table thead th,
+  .kdm-areas-table tbody td {
+    padding: 8px 10px;
+    font-size: 12px;
+  }
+}

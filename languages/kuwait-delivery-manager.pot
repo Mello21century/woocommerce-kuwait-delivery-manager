@@ -1,0 +1,310 @@
+# Kuwait Delivery Manager — Translation Template
+# Copyright (C) 2024 Kuwait Delivery Manager
+# This file is distributed under the same license as the Kuwait Delivery Manager plugin.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: Kuwait Delivery Manager 1.2.0\n"
+"Report-Msgid-Bugs-To: https://example.com/kuwait-delivery-manager\n"
+"POT-Creation-Date: 2024-01-01 00:00+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"X-Generator: Kuwait Delivery Manager 1.2.0\n"
+"X-Domain: kuwait-delivery-manager\n"
+
+#. Plugin Name of the plugin
+msgid "Kuwait Delivery Manager"
+msgstr ""
+
+#. Plugin URI of the plugin
+msgid "https://example.com/kuwait-delivery-manager"
+msgstr ""
+
+#. Description of the plugin
+msgid "Manage Kuwait delivery areas and pricing from the WooCommerce admin dashboard. Full bilingual (AR/EN) support, WooCommerce checkout integration, inline editing, copy-to-all, WPML & Polylang compatible."
+msgstr ""
+
+#. Author of the plugin
+msgid "Kuwait Delivery Manager"
+msgstr ""
+
+# -----------------------------------------------------------------------
+# kuwait-delivery-manager.php
+# -----------------------------------------------------------------------
+
+#: kuwait-delivery-manager.php
+msgid "WooCommerce is not active. The delivery areas manager will still work, but checkout integration requires WooCommerce."
+msgstr ""
+
+# -----------------------------------------------------------------------
+# includes/class-admin.php — Menu labels
+# -----------------------------------------------------------------------
+
+#: includes/class-admin.php
+msgid "مناطق التوصيل - الكويت"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "مناطق الكويت"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "ليس لديك صلاحية الوصول إلى هذه الصفحة."
+msgstr ""
+
+# -----------------------------------------------------------------------
+# includes/class-admin.php — JavaScript localisation strings
+# -----------------------------------------------------------------------
+
+#: includes/class-admin.php
+msgid "جاري التحميل…"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "حدث خطأ، يرجى المحاولة مجدداً"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "لديك تغييرات غير محفوظة. هل تريد مواصلة التنقل؟"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "لا توجد مناطق لهذه المحافظة. اضغط «إضافة منطقة» لإضافة أول منطقة."
+msgstr ""
+
+#: includes/class-admin.php
+msgid "تم حفظ الترتيب"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "إغلاق"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "تعديل"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "حفظ"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "إلغاء"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "حذف"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "إضافة منطقة"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "إضافة"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "جاري الحفظ…"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "جاري الإضافة…"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "هل أنت متأكد من حذف هذه المنطقة؟ لا يمكن التراجع."
+msgstr ""
+
+#: includes/class-admin.php
+msgid "نسخ قيمة الصف الأول إلى جميع الصفوف"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "تطبيق هذه القيمة على جميع المناطق"
+msgstr ""
+
+#. Placeholders: {field} = field label, {value} = price value, {count} = number of areas
+#: includes/class-admin.php
+msgid "نسخ {field} = {value} إلى جميع {count} منطقة؟"
+msgstr ""
+
+#. Placeholders: {field} = field label, {value} = price value, {count} = number of areas
+#: includes/class-admin.php
+msgid "تطبيق {field} = {value} على جميع {count} منطقة؟"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "رسوم التوصيل السريع"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "أقل قيمة للطلب"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "المنطقة"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "سعر التوصيل"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "التوصيل السريع"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "ملاحظات التوصيل"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "أقل قيمة"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "الحالة"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "إجراءات"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "مفعّل"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "موقوف"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "اسم المنطقة (عربي) حقل مطلوب."
+msgstr ""
+
+#: includes/class-admin.php
+msgid "اسحب لإعادة الترتيب"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "مفعّل تلقائياً"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "اسم المنطقة بالعربي"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "Area Name in English"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "ملاحظات بالعربي"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "Notes in English"
+msgstr ""
+
+#: includes/class-admin.php
+msgid "د.ك"
+msgstr ""
+
+# -----------------------------------------------------------------------
+# includes/class-ajax.php
+# -----------------------------------------------------------------------
+
+#. Translators: 1: formatted price value, 2: number of areas affected
+#: includes/class-ajax.php
+msgid "تم تطبيق القيمة %1$s على %2$d منطقة."
+msgstr ""
+
+# -----------------------------------------------------------------------
+# templates/admin-page.php
+# -----------------------------------------------------------------------
+
+#: templates/admin-page.php
+msgid "إدارة مناطق التوصيل — الكويت"
+msgstr ""
+
+#: templates/admin-page.php
+msgid "اختر محافظة من القائمة لعرض مناطقها وتعديل أسعار التوصيل."
+msgstr ""
+
+#: templates/admin-page.php
+msgid "قائمة المحافظات"
+msgstr ""
+
+#: templates/admin-page.php
+msgid "المحافظات"
+msgstr ""
+
+#: templates/admin-page.php
+msgid "جاري تحميل البيانات…"
+msgstr ""
+
+#: templates/admin-page.php
+msgid "مناطق المحافظة"
+msgstr ""
+
+#: templates/admin-page.php
+msgid "الكويت · 6 محافظات"
+msgstr ""
+
+# -----------------------------------------------------------------------
+# includes/class-checkout.php — Billing field labels & options
+# -----------------------------------------------------------------------
+
+#: includes/class-checkout.php
+msgid "— اختر المحافظة أولاً —"
+msgstr ""
+
+#: includes/class-checkout.php
+msgid "— اختر المنطقة —"
+msgstr ""
+
+#: includes/class-checkout.php
+msgid "— اختر المحافظة —"
+msgstr ""
+
+#: includes/class-checkout.php
+msgid "سريع:"
+msgstr ""
+
+#: includes/class-checkout.php
+msgid "المحافظة"
+msgstr ""
+
+#: includes/class-checkout.php
+msgid "منطقة التوصيل"
+msgstr ""
+
+#: includes/class-checkout.php
+msgid "نوع التوصيل"
+msgstr ""
+
+#: includes/class-checkout.php
+msgid "توصيل عادي"
+msgstr ""
+
+#: includes/class-checkout.php
+msgid "توصيل سريع (رسوم إضافية)"
+msgstr ""
+
+#. Translators: %s: area name
+#: includes/class-checkout.php
+msgid "رسوم التوصيل السريع — %s"
+msgstr ""
+
+#. Translators: %s: area name
+#: includes/class-checkout.php
+msgid "رسوم التوصيل — %s"
+msgstr ""
