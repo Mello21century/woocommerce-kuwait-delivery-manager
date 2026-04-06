@@ -411,6 +411,44 @@
     color: var(--kdm-co-primary);
 }
 
+/* Disabled area — minimum_order not met */
+.kdm-combo-item.kdm-disabled {
+  opacity: .45;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.kdm-min-order-note {
+  display: block;
+  font-size: 10px;
+  color: #d63638;
+  direction: ltr;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+/* Free delivery badge — free_minimum_order threshold met */
+.kdm-badge-free {
+  display: inline-block;
+  background: #00a32a;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 10px;
+  letter-spacing: .3px;
+}
+
+/* Free delivery hint — threshold not yet met */
+.kdm-free-hint {
+  display: block;
+  font-size: 10px;
+  color: #00a32a;
+  direction: ltr;
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
 /* No results */
 .kdm-combo-no-results {
     padding: 16px;

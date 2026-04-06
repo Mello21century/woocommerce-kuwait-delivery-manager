@@ -187,14 +187,17 @@ class KDM_Ajax_Import {
 
 		// Base defaults for area imports.
 		$defaults = array(
-			'delivery_price' => isset( $_POST['base_delivery_price'] )
+			'delivery_price'     => isset( $_POST['base_delivery_price'] )
 				? KDM_Helper::sanitize_price( $_POST['base_delivery_price'] )
 				: 0.0,
-			'express_fee' => isset( $_POST['base_express_fee'] )
+			'express_fee'        => isset( $_POST['base_express_fee'] )
 				? KDM_Helper::sanitize_price( $_POST['base_express_fee'] )
 				: 0.0,
-			'minimum_order' => isset( $_POST['base_minimum_order'] )
+			'minimum_order'      => isset( $_POST['base_minimum_order'] )
 				? KDM_Helper::sanitize_price( $_POST['base_minimum_order'] )
+				: 0.0,
+			'free_minimum_order' => isset( $_POST['base_free_minimum_order'] )
+				? KDM_Helper::sanitize_price( $_POST['base_free_minimum_order'] )
 				: 0.0,
 		);
 

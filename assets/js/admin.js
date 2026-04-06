@@ -177,6 +177,9 @@
             html += '<th class="kdm-col-minorder">' + this.escHtml(S.colMinOrder) +
                      ' <button type="button" class="kdm-copy-col-btn" data-field="minimum_order" title="' +
                      this.escAttr(S.copyFirstToAll) + '"><span class="dashicons dashicons-admin-page"></span></button></th>';
+            html += '<th class="kdm-col-freeminorder">' + this.escHtml(S.colFreeMinOrder) +
+                     ' <button type="button" class="kdm-copy-col-btn" data-field="free_minimum_order" title="' +
+                     this.escAttr(S.copyFirstToAll) + '"><span class="dashicons dashicons-admin-page"></span></button></th>';
             html += '<th class="kdm-col-status">' + this.escHtml(S.colStatus) + '</th>';
             html += '<th class="kdm-col-actions">' + this.escHtml(S.colActions) + '</th>';
             html += '</tr></thead>';
@@ -198,7 +201,7 @@
         },
 
         colCount: function () {
-            return kdmData.expressEnabled ? 8 : 7;
+            return kdmData.expressEnabled ? 9 : 8;
         },
 
         renderRow: function (area) {
@@ -219,6 +222,7 @@
                        ' data-price="' + this.escAttr(area.delivery_price) + '"' +
                        ' data-express="' + this.escAttr(area.express_fee) + '"' +
                        ' data-minorder="' + this.escAttr(area.minimum_order) + '"' +
+                       ' data-freeminorder="' + this.escAttr(area.free_minimum_order || 0) + '"' +
                        ' data-active="' + (parseInt(area.is_active, 10) ? '1' : '0') + '">';
 
             // Drag handle
@@ -246,6 +250,9 @@
 
             // Min order
             html += '<td class="kdm-col-minorder">' + this.fmtPrice(area.minimum_order) + '</td>';
+
+            // Free delivery min order
+            html += '<td class="kdm-col-freeminorder">' + this.fmtPrice(area.free_minimum_order || 0) + '</td>';
 
             // Status toggle
             html += '<td class="kdm-col-status">' +
@@ -286,9 +293,10 @@
             var nameEn   = $row.data('name-en')   || '';
             var notesAr  = $row.data('notes-ar')  || '';
             var notesEn  = $row.data('notes-en')  || '';
-            var price    = $row.data('price')      || '';
-            var express  = $row.data('express')    || '';
-            var minorder = $row.data('minorder')   || '';
+            var price        = $row.data('price')         || '';
+            var express      = $row.data('express')       || '';
+            var minorder     = $row.data('minorder')      || '';
+            var freeminorder = $row.data('freeminorder')  || '';
 
             var html = '<td class="kdm-col-drag"><span class="kdm-drag-handle dashicons dashicons-menu"></span></td>';
 
@@ -336,6 +344,14 @@
                     this.escAttr(S.pushToAll) + '"><span class="dashicons dashicons-admin-page"></span></button>' +
                     '</td>';
 
+            // Free delivery min order
+            html += '<td class="kdm-col-freeminorder">' +
+                    '<input type="number" class="kdm-input kdm-input-freeminorder" name="free_minimum_order" value="' +
+                    this.escAttr(freeminorder) + '" step="0.001" min="0">' +
+                    '<button type="button" class="kdm-push-val-btn" data-field="free_minimum_order" title="' +
+                    this.escAttr(S.pushToAll) + '"><span class="dashicons dashicons-admin-page"></span></button>' +
+                    '</td>';
+
             // Status (keep current)
             var checked = parseInt($row.data('active'), 10) ? ' checked' : '';
             html += '<td class="kdm-col-status">' +
@@ -373,16 +389,17 @@
             $btn.prop('disabled', true).text(S.saving);
 
             $.post(kdmData.ajaxUrl, {
-                action:         'kdm_save_area',
-                area_id:        id,
-                name_en:        nameEn,
-                name_ar:        nameAr,
-                notes_en:       $.trim($row.find('[name="notes_en"]').val()),
-                notes_ar:       $.trim($row.find('[name="notes_ar"]').val()),
-                delivery_price: $row.find('[name="delivery_price"]').val(),
-                express_fee:    $row.find('[name="express_fee"]').val() || '0',
-                minimum_order:  $row.find('[name="minimum_order"]').val(),
-                nonce:          kdmData.nonce
+                action:              'kdm_save_area',
+                area_id:             id,
+                name_en:             nameEn,
+                name_ar:             nameAr,
+                notes_en:            $.trim($row.find('[name="notes_en"]').val()),
+                notes_ar:            $.trim($row.find('[name="notes_ar"]').val()),
+                delivery_price:      $row.find('[name="delivery_price"]').val(),
+                express_fee:         $row.find('[name="express_fee"]').val() || '0',
+                minimum_order:       $row.find('[name="minimum_order"]').val(),
+                free_minimum_order:  $row.find('[name="free_minimum_order"]').val() || '0',
+                nonce:               kdmData.nonce
             }, function (res) {
                 if (res.success && res.data && res.data.area) {
                     var newHtml = self.renderRow(res.data.area);
@@ -423,10 +440,11 @@
                     ar: $row.data('notes-ar') || '',
                     en: $row.data('notes-en') || ''
                 },
-                delivery_price: $row.data('price')    || '0',
-                express_fee:    $row.data('express')   || '0',
-                minimum_order:  $row.data('minorder')  || '0',
-                is_active:      $row.data('active')    || '0'
+                delivery_price:     $row.data('price')        || '0',
+                express_fee:        $row.data('express')      || '0',
+                minimum_order:      $row.data('minorder')     || '0',
+                free_minimum_order: $row.data('freeminorder') || '0',
+                is_active:          $row.data('active')       || '0'
             };
 
             var newHtml = this.renderRow(area);
@@ -484,6 +502,11 @@
                     '<input type="number" class="kdm-input kdm-input-minorder" name="minimum_order" value="0" step="0.001" min="0">' +
                     '</td>';
 
+            // Free delivery min order
+            html += '<td class="kdm-col-freeminorder">' +
+                    '<input type="number" class="kdm-input kdm-input-freeminorder" name="free_minimum_order" value="0" step="0.001" min="0">' +
+                    '</td>';
+
             // Status (placeholder)
             html += '<td class="kdm-col-status">—</td>';
 
@@ -518,16 +541,17 @@
             $btn.prop('disabled', true).text(S.adding);
 
             $.post(kdmData.ajaxUrl, {
-                action:         'kdm_add_area',
-                city_id:        self.currentCityId,
-                name_en:        nameEn,
-                name_ar:        nameAr,
-                notes_en:       $.trim($row.find('[name="notes_en"]').val()),
-                notes_ar:       $.trim($row.find('[name="notes_ar"]').val()),
-                delivery_price: $row.find('[name="delivery_price"]').val(),
-                express_fee:    $row.find('[name="express_fee"]').val() || '0',
-                minimum_order:  $row.find('[name="minimum_order"]').val(),
-                nonce:          kdmData.nonce
+                action:              'kdm_add_area',
+                city_id:             self.currentCityId,
+                name_en:             nameEn,
+                name_ar:             nameAr,
+                notes_en:            $.trim($row.find('[name="notes_en"]').val()),
+                notes_ar:            $.trim($row.find('[name="notes_ar"]').val()),
+                delivery_price:      $row.find('[name="delivery_price"]').val(),
+                express_fee:         $row.find('[name="express_fee"]').val() || '0',
+                minimum_order:       $row.find('[name="minimum_order"]').val(),
+                free_minimum_order:  $row.find('[name="free_minimum_order"]').val() || '0',
+                nonce:               kdmData.nonce
             }, function (res) {
                 if (res.success && res.data && res.data.area) {
                     var newHtml = self.renderRow(res.data.area);
@@ -719,6 +743,8 @@
                 value = $row.find('[name="express_fee"]').val() || '0';
             } else if (field === 'minimum_order') {
                 value = $row.find('[name="minimum_order"]').val() || '0';
+            } else if (field === 'free_minimum_order') {
+                value = $row.find('[name="free_minimum_order"]').val() || '0';
             }
 
             this.doCopyFieldToAll(field, value);
@@ -748,9 +774,10 @@
 
         fieldToDataAttr: function (field) {
             var map = {
-                'delivery_price': 'price',
-                'express_fee':    'express',
-                'minimum_order':  'minorder'
+                'delivery_price':     'price',
+                'express_fee':        'express',
+                'minimum_order':      'minorder',
+                'free_minimum_order': 'freeminorder'
             };
             return map[field] || field;
         },

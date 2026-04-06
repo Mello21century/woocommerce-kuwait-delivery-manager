@@ -5,7 +5,7 @@
 - Requires at least: 5.8
 - Tested up to: 6.6
 - Requires PHP: 7.4
-- Stable tag: 1.3.0
+- Stable tag: 1.4.0
 - License: GPLv2 or later
 - License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -103,6 +103,17 @@ total meets or exceeds the threshold, delivery fees become zero. Set to 0 to
 always charge delivery fees.
 
 ##### == Changelog ==
+
+= 1.4.0 =
+
+* NEW: Versioned DB upgrade system — `KDM_Database::maybe_upgrade()` runs on `plugins_loaded` and applies schema migrations in sequence, so existing installs upgrade automatically without re-activation.
+* NEW: `free_minimum_order` column — per-area threshold for free delivery (cart >= value → fees become 0). Replaces the previous `minimum_order` free-delivery behavior.
+* FIXED: `minimum_order` semantics corrected — now disables the area in the checkout combo dropdown when cart total is below the threshold. Area appears greyed out, unselectable, with a "(min. order: X.XXX KWD)" note.
+* NEW: Checkout combo dropdown shows a green "Free" badge next to area name when `free_minimum_order` threshold is met.
+* NEW: Checkout combo dropdown shows "Free on orders over X.XXX KWD" hint when `free_minimum_order` is set but threshold not yet met.
+* NEW: Server-side validation in `validate_fields()` rejects checkout if selected area's `minimum_order` is not met.
+* IMPROVED: CSV import supports `free_minimum_order` column mapping and base default value.
+* IMPROVED: Admin areas table has separate "Min. Order" and "Free Delivery Min." columns with copy-to-all support.
 
 = 1.3.0 =
 

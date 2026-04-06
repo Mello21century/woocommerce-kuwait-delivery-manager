@@ -23,11 +23,11 @@ defined( 'ABSPATH' ) || exit;
 // ---------------------------------------------------------------------------
 // Plugin constants
 // ---------------------------------------------------------------------------
-const KDM_VERSION     = '1.3.0';
+const KDM_VERSION     = '1.4.0';
 const KDM_PLUGIN_FILE = __FILE__;
 define( 'KDM_PLUGIN_DIR', plugin_dir_path( __FILE__ ) );
 define( 'KDM_PLUGIN_URL', plugin_dir_url( __FILE__ ) );
-const KDM_DB_VERSION  = '2.0'; // 2.0: two-table schema (cities + areas) with JSON columns
+const KDM_DB_VERSION  = '2.1'; // 2.1: added free_minimum_order column
 
 // ---------------------------------------------------------------------------
 // Load required class files

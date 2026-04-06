@@ -193,6 +193,8 @@ class KDM_Checkout {
                                      data-city="<?php echo esc_attr( $cid ); ?>"
                                      data-price="<?php echo esc_attr( $area['delivery_price'] ); ?>"
                                      data-express="<?php echo esc_attr( $area['express_fee'] ); ?>"
+                                     data-minimum="<?php echo esc_attr( $area['minimum_order'] ); ?>"
+                                     data-freeminimum="<?php echo esc_attr( $area['free_minimum_order'] ?? 0 ); ?>"
                                      data-name="<?php echo esc_attr( $display ); ?>">
                                     <span class="kdm-item-name"><?php echo esc_html( $display ); ?></span>
                                     <span class="kdm-item-price"><?php echo esc_html( KDM_Helper::format_price( $area['delivery_price'] ) ); ?><?php echo esc_html( $currency_symbol ); ?></span>
@@ -248,6 +250,7 @@ class KDM_Checkout {
                         'savedDeliveryType'   => WC()->session ? (string) WC()->session->get( self::SESSION_DELIVERY_TYPE, 'normal' ) : 'normal',
                         'expressEnabled'      => (bool) get_option( 'kdm_express_enabled', 1 ),
                         'countriesWithCities' => KDM_Database::get_countries_with_cities(),
+                        'cartSubtotal'        => WC()->cart ? (float) WC()->cart->get_subtotal() : 0.0,
                         'strings'             => array(
                                 'selectArea'    => __( '-- Select area --', 'kuwait-delivery-manager' ),
                                 'noResults'     => __( 'No results match your search', 'kuwait-delivery-manager' ),
@@ -255,6 +258,11 @@ class KDM_Checkout {
                                 'priceExpress'  => __( 'Express Delivery', 'kuwait-delivery-manager' ),
                                 'currency'      => $currency_symbol,
                                 'fieldRequired' => __( 'Delivery area is a required field.', 'kuwait-delivery-manager' ),
+                                'freeDelivery'  => __( 'Free', 'kuwait-delivery-manager' ),
+                            /* translators: %s: formatted minimum order price */
+                                'freeOver'      => __( 'Free on orders over %s', 'kuwait-delivery-manager' ),
+                            /* translators: %s: formatted minimum order price */
+                                'minOrderNote'  => __( 'Min. order: %s', 'kuwait-delivery-manager' ),
                         ),
                 )
         );
@@ -328,8 +336,8 @@ class KDM_Checkout {
     // ---------------------------------------------------------------------------
 
     /**
-     * Calculates fee amount and label. Implements free delivery threshold:
-     * if minimum_order > 0 and cart subtotal >= minimum_order, fees become 0.
+     * Calculates fee amount and label.
+     * free_minimum_order: if > 0 and cart subtotal >= free_minimum_order, fees become 0.
      */
     private function calculate_fee_data( int $area_id, string $delivery_type ): ?array {
         if ( ! $area_id ) {
@@ -344,12 +352,12 @@ class KDM_Checkout {
 
         $normal_price  = (float) $area['delivery_price'];
         $express_extra = (float) $area['express_fee'];
-        $min_order     = (float) $area['minimum_order'];
+        $free_min      = (float) ( $area['free_minimum_order'] ?? 0 );
 
         // Free delivery threshold.
-        if ( $min_order > 0 && WC()->cart ) {
+        if ( $free_min > 0 && WC()->cart ) {
             $cart_subtotal = (float) WC()->cart->get_subtotal();
-            if ( $cart_subtotal >= $min_order ) {
+            if ( $cart_subtotal >= $free_min ) {
                 $normal_price  = 0.0;
                 $express_extra = 0.0;
             }
@@ -443,6 +451,25 @@ class KDM_Checkout {
             );
 
             return;
+        }
+
+        // Minimum order check — area is unavailable if cart total is below threshold.
+        $min_order = (float) ( $area['minimum_order'] ?? 0 );
+        if ( $min_order > 0 ) {
+            $subtotal = WC()->cart ? (float) WC()->cart->get_subtotal() : 0.0;
+            if ( $subtotal < $min_order ) {
+                wc_add_notice(
+                        sprintf(
+                        /* translators: 1: area name 2: minimum order price */
+                                esc_html__( 'A minimum order of %2$s is required to deliver to %1$s.', 'kuwait-delivery-manager' ),
+                                '<strong>' . esc_html( KDM_I18n::area_name( $area ) ) . '</strong>',
+                                '<strong>' . wc_price( $min_order ) . '</strong>'
+                        ),
+                        'error'
+                );
+
+                return;
+            }
         }
 
         // Express fallback.
@@ -563,7 +590,7 @@ class KDM_Checkout {
         ?>
         <div style="margin-bottom:24px;font-family:Arial,sans-serif;">
             <h2 style="font-size:18px;color:#333;border-bottom:2px solid #e5e5e5;padding-bottom:8px;"><?php esc_html_e( 'Delivery Details', 'kuwait-delivery-manager' ); ?></h2>
-            <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+            <table style="width:100%;border-collapse:collapse;">
                 <?php if ( $city_name ) : ?>
                     <tr>
                         <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;font-weight:bold;width:40%;"><?php esc_html_e( 'City', 'kuwait-delivery-manager' ); ?></td>

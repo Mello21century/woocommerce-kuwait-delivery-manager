@@ -52,6 +52,7 @@
             }
 
             this.checkCountry( false );
+            this.applyItemStates();
 
             if ( this.$areaIn.val() ) {
                 this.syncExpressVisibility( false );
@@ -108,7 +109,10 @@
 
             this.$list
                 .off('click.kdm')
-                .on('click.kdm', '.kdm-combo-item', function () { self.selectItem( $(this) ); });
+                .on('click.kdm', '.kdm-combo-item', function () {
+                    if ( $(this).hasClass('kdm-disabled') ) { return; }
+                    self.selectItem( $(this) );
+                });
 
             this.$type
                 .off('change.kdm')
@@ -163,6 +167,54 @@
             this.$trigger.find('.kdm-combo-placeholder')
                 .text( kdmCheckout.strings.selectArea )
                 .removeClass('has-value');
+        },
+
+        // -------------------------------------------------------------------
+        // Apply disabled / free-delivery states to all combo items
+        // -------------------------------------------------------------------
+
+        applyItemStates: function () {
+            var cartSubtotal = kdmCheckout.cartSubtotal || 0;
+            var S            = kdmCheckout.strings;
+            var currency     = S.currency || '';
+
+            this.$list.find('.kdm-combo-item').each(function () {
+                var $item     = $(this);
+                var minOrder  = parseFloat( $item.data('minimum')     || 0 );
+                var freeMin   = parseFloat( $item.data('freeminimum') || 0 );
+                var basePrice = parseFloat( $item.data('price')       || 0 );
+
+                var $priceEl = $item.find('.kdm-item-price');
+
+                // Reset any previously applied states.
+                $item.removeClass('kdm-disabled').removeAttr('aria-disabled');
+                $priceEl.find('.kdm-badge-free, .kdm-free-hint, .kdm-min-order-note').remove();
+                $priceEl.find('.kdm-price-text').each(function () {
+                    $(this).replaceWith( $(this).text() );
+                });
+
+                // Disabled: cart is below minimum_order threshold.
+                if ( minOrder > 0 && cartSubtotal < minOrder ) {
+                    $item.addClass('kdm-disabled').attr('aria-disabled', 'true');
+                    var note = S.minOrderNote
+                        ? S.minOrderNote.replace( '%s', minOrder.toFixed(3) + ' ' + currency )
+                        : '(' + minOrder.toFixed(3) + ' ' + currency + ')';
+                    $priceEl.append( '<span class="kdm-min-order-note">' + note + '</span>' );
+                    return; // No free-delivery badge on disabled items.
+                }
+
+                // Free delivery badge or hint.
+                if ( freeMin > 0 ) {
+                    if ( cartSubtotal >= freeMin ) {
+                        $priceEl.html( '<span class="kdm-badge-free">' + ( S.freeDelivery || 'Free' ) + '</span>' );
+                    } else {
+                        var hint = S.freeOver
+                            ? S.freeOver.replace( '%s', freeMin.toFixed(3) + ' ' + currency )
+                            : 'Free on orders over ' + freeMin.toFixed(3) + ' ' + currency;
+                        $priceEl.append( '<span class="kdm-free-hint">' + hint + '</span>' );
+                    }
+                }
+            });
         },
 
         // -------------------------------------------------------------------

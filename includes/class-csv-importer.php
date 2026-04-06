@@ -42,7 +42,7 @@ class KDM_CSV_Importer {
 	 * @param string $country_iso2  Two-letter country code.
 	 * @param string $type          'cities' or 'areas'.
 	 * @param array  $mapping       [ csv_col_index => field_name, ... ]
-	 * @param array  $defaults      Base values: delivery_price, express_fee, minimum_order.
+	 * @param array  $defaults      Base values: delivery_price, express_fee, minimum_order, free_minimum_order.
 	 * @param string $city_resolve  How to resolve city_id for areas: 'by_id', 'by_name_en', 'by_name_ar'.
 	 */
 	public function __construct(
@@ -167,14 +167,15 @@ class KDM_CSV_Importer {
 		while ( ( $row = fgetcsv( $handle ) ) !== false ) {
 			$row_num++;
 
-			$name_en        = '';
-			$name_ar        = '';
-			$notes_en       = '';
-			$notes_ar       = '';
-			$delivery_price = (float) ( $this->defaults['delivery_price'] ?? 0 );
-			$express_fee    = (float) ( $this->defaults['express_fee'] ?? 0 );
-			$minimum_order  = (float) ( $this->defaults['minimum_order'] ?? 0 );
-			$city_ref       = '';
+			$name_en            = '';
+			$name_ar            = '';
+			$notes_en           = '';
+			$notes_ar           = '';
+			$delivery_price     = (float) ( $this->defaults['delivery_price'] ?? 0 );
+			$express_fee        = (float) ( $this->defaults['express_fee'] ?? 0 );
+			$minimum_order      = (float) ( $this->defaults['minimum_order'] ?? 0 );
+			$free_minimum_order = (float) ( $this->defaults['free_minimum_order'] ?? 0 );
+			$city_ref           = '';
 
 			foreach ( $this->mapping as $col_index => $field ) {
 				$col_index = absint( $col_index );
@@ -200,6 +201,11 @@ class KDM_CSV_Importer {
 					case 'minimum_order':
 						if ( '' !== $value ) {
 							$minimum_order = KDM_Helper::sanitize_price( $value );
+						}
+						break;
+					case 'free_minimum_order':
+						if ( '' !== $value ) {
+							$free_minimum_order = KDM_Helper::sanitize_price( $value );
 						}
 						break;
 					case 'delivery_notes':
@@ -245,14 +251,15 @@ class KDM_CSV_Importer {
 
 			$result = KDM_Database::add_area(
 				array(
-					'city_id'        => $city_id,
-					'area_name'      => $area_name,
-					'is_active'      => 1,
-					'sorting'        => 100,
-					'delivery_price' => $delivery_price,
-					'express_fee'    => $express_fee,
-					'delivery_notes' => $delivery_notes,
-					'minimum_order'  => $minimum_order,
+					'city_id'            => $city_id,
+					'area_name'          => $area_name,
+					'is_active'          => 1,
+					'sorting'            => 100,
+					'delivery_price'     => $delivery_price,
+					'express_fee'        => $express_fee,
+					'delivery_notes'     => $delivery_notes,
+					'minimum_order'      => $minimum_order,
+					'free_minimum_order' => $free_minimum_order,
 				)
 			);
 

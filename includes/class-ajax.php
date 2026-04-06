@@ -304,7 +304,7 @@ class KDM_Ajax {
 	/**
 	 * Updates an existing area.
 	 * POST params: area_id, name_en, name_ar, notes_en, notes_ar,
-	 *              delivery_price, express_fee, minimum_order, nonce
+	 *              delivery_price, express_fee, minimum_order, free_minimum_order, nonce
 	 */
 	public function save_area(): void {
 		$this->verify_request();
@@ -355,7 +355,7 @@ class KDM_Ajax {
 	/**
 	 * Inserts a new area.
 	 * POST params: city_id, name_en, name_ar, notes_en, notes_ar,
-	 *              delivery_price, express_fee, minimum_order, nonce
+	 *              delivery_price, express_fee, minimum_order, free_minimum_order, nonce
 	 */
 	public function add_area(): void {
 		$this->verify_request();
@@ -385,10 +385,11 @@ class KDM_Ajax {
 
 		$data = array_merge(
 			array(
-				'delivery_price' => 0.0,
-				'express_fee'    => 0.0,
-				'minimum_order'  => 0.0,
-				'is_active'      => 1,
+				'delivery_price'     => 0.0,
+				'express_fee'        => 0.0,
+				'minimum_order'      => 0.0,
+				'free_minimum_order' => 0.0,
+				'is_active'          => 1,
 			),
 			$data,
 			array(

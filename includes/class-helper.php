@@ -97,7 +97,7 @@ class KDM_Helper {
 		$clean = array();
 
 		// Numeric / price fields.
-		foreach ( array( 'delivery_price', 'express_fee', 'minimum_order' ) as $field ) {
+		foreach ( array( 'delivery_price', 'express_fee', 'minimum_order', 'free_minimum_order' ) as $field ) {
 			if ( array_key_exists( $field, $data ) ) {
 				$clean[ $field ] = self::sanitize_price( $data[ $field ] );
 			}

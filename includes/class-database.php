@@ -3,7 +3,7 @@
  * KDM_Database
  *
  * All database interactions for the plugin.
- * Schema version: 2.0  (two tables: kdm_delivery_cities + kdm_delivery_areas with JSON columns)
+ * Schema version: 2.1  (two tables: kdm_delivery_cities + kdm_delivery_areas with JSON columns + free_minimum_order)
  *
  * @package KuwaitDeliveryManager
  * @since   1.3.0
@@ -70,6 +70,7 @@ class KDM_Database {
   express_fee decimal(10,3) NOT NULL DEFAULT 0.000,
   delivery_notes longtext DEFAULT NULL,
   minimum_order decimal(10,3) NOT NULL DEFAULT 0.000,
+  free_minimum_order decimal(10,3) NOT NULL DEFAULT 0.000,
   created_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY  (area_id),
@@ -79,6 +80,48 @@ class KDM_Database {
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
 		dbDelta( $sql_cities );
 		dbDelta( $sql_areas );
+	}
+
+	/**
+	 * Runs pending schema migrations on plugins_loaded.
+	 * Compares the stored db version to KDM_DB_VERSION and applies
+	 * each migration in sequence.
+	 */
+	public static function maybe_upgrade(): void {
+		$installed = get_option( 'kdm_db_version', '1.0' );
+
+		if ( version_compare( $installed, KDM_DB_VERSION, '>=' ) ) {
+			return;
+		}
+
+		if ( version_compare( $installed, '2.0', '<' ) ) {
+			// Full table creation covers pre-2.0 installs.
+			self::create_tables();
+		}
+
+		if ( version_compare( $installed, '2.1', '<' ) ) {
+			self::upgrade_to_2_1();
+		}
+
+		update_option( 'kdm_db_version', KDM_DB_VERSION );
+	}
+
+	/**
+	 * Migration: adds free_minimum_order column to kdm_delivery_areas.
+	 */
+	private static function upgrade_to_2_1(): void {
+		global $wpdb;
+
+		$table = self::get_areas_table_name();
+		// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$cols = $wpdb->get_col( "DESC `{$table}`", 0 );
+
+		if ( ! in_array( 'free_minimum_order', $cols, true ) ) {
+			// phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+			$wpdb->query(
+				"ALTER TABLE `{$table}` ADD COLUMN `free_minimum_order` decimal(10,3) NOT NULL DEFAULT 0.000 AFTER `minimum_order`"
+			);
+		}
 	}
 
 	// ---------------------------------------------------------------------------
@@ -101,107 +144,107 @@ class KDM_Database {
 
 		$now = current_time( 'mysql' );
 
-		// Seed structure: city => [ name_ar, name_en, areas => [ [ar, en, price, express, min] ] ]
+		// Seed structure: city => [ name_ar, name_en, areas => [ [ar, en, price, express, min_order, free_min_order] ] ]
 		$data = array(
 			array(
 				'ar'    => "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xa7\xd8\xb5\xd9\x85\xd8\xa9",
 				'en'    => 'Kuwait Capital',
 				'areas' => array(
-					array( "\xd8\xa7\xd9\x84\xd9\x83\xd9\x88\xd9\x8a\xd8\xaa", 'Kuwait City', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb4\xd9\x88\xd9\x8a\xd8\xae", 'Shuwaikh', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xaf\xd8\xa7\xd8\xb3\xd9\x85\xd8\xa9", 'Dasma', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x82\xd8\xa7\xd8\xaf\xd8\xb3\xd9\x8a\xd8\xa9", 'Qadisiya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd9\x88\xd8\xb6\xd8\xa9", 'Rawda', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd8\xa7\xd9\x84\xd8\xad\xd9\x8a\xd8\xa9", 'Salehiya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb3\xd8\xb1\xd8\xa9", 'Surra', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x86\xd8\xb2\xd9\x87\xd8\xa9", 'Nuzha', 1.500, 1.000, 0.000 ),
-					array( "\xd9\x83\xd9\x8a\xd9\x81\xd8\xa7\xd9\x86", 'Kaifan', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb4\xd8\xa7\xd9\x85\xd9\x8a\xd8\xa9", 'Shamiya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x85\xd8\xb1\xd9\x82\xd8\xa7\xd8\xa8", 'Mirqab', 1.500, 1.000, 0.000 ),
-					array( "\xd9\x82\xd8\xb1\xd8\xb7\xd8\xa8\xd8\xa9", 'Qortuba', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x81\xd9\x8a\xd8\xad\xd8\xa7\xd8\xa1", 'Faiha', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x83\xd9\x88\xd9\x8a\xd8\xaa", 'Kuwait City', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb4\xd9\x88\xd9\x8a\xd8\xae", 'Shuwaikh', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xaf\xd8\xa7\xd8\xb3\xd9\x85\xd8\xa9", 'Dasma', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x82\xd8\xa7\xd8\xaf\xd8\xb3\xd9\x8a\xd8\xa9", 'Qadisiya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd9\x88\xd8\xb6\xd8\xa9", 'Rawda', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd8\xa7\xd9\x84\xd8\xad\xd9\x8a\xd8\xa9", 'Salehiya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb3\xd8\xb1\xd8\xa9", 'Surra', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x86\xd8\xb2\xd9\x87\xd8\xa9", 'Nuzha', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd9\x83\xd9\x8a\xd9\x81\xd8\xa7\xd9\x86", 'Kaifan', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb4\xd8\xa7\xd9\x85\xd9\x8a\xd8\xa9", 'Shamiya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x85\xd8\xb1\xd9\x82\xd8\xa7\xd8\xa8", 'Mirqab', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd9\x82\xd8\xb1\xd8\xb7\xd8\xa8\xd8\xa9", 'Qortuba', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd9\x8a\xd8\xad\xd8\xa7\xd8\xa1", 'Faiha', 1.500, 1.000, 0.000, 0.000 ),
 				),
 			),
 			array(
 				'ar'    => "\xd8\xad\xd9\x88\xd9\x84\xd9\x8a",
 				'en'    => 'Hawalli',
 				'areas' => array(
-					array( "\xd8\xad\xd9\x88\xd9\x84\xd9\x8a", 'Hawalli', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd9\x85\xd9\x8a\xd8\xab\xd9\x8a\xd8\xa9", 'Rumaithiya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xb3\xd9\x84\xd9\x88\xd9\x89", 'Salwa', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb4\xd8\xb9\xd8\xa8", 'Sha\'ab', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa8\xd9\x8a\xd8\xa7\xd9\x86", 'Bayan', 1.750, 1.000, 0.000 ),
-					array( "\xd9\x85\xd8\xb4\xd8\xb1\xd9\x81", 'Mishref', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xac\xd8\xa7\xd8\xa8\xd8\xb1\xd9\x8a\xd8\xa9", 'Jabriya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb3\xd8\xa7\xd9\x84\xd9\x85\xd9\x8a\xd8\xa9", 'Salmiya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd8\xa3\xd9\x8a", 'Ar-Rai', 1.500, 1.000, 0.000 ),
-					array( "\xd9\x85\xd9\x8a\xd8\xaf\xd8\xa7\xd9\x86 \xd8\xad\xd9\x88\xd9\x84\xd9\x8a", 'Hawalli Square', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa8\xd9\x8a\xd8\xa7\xd9\x86 \xd8\xa7\xd9\x84\xd8\xac\xd9\x86\xd9\x88\xd8\xa8\xd9\x8a\xd8\xa9", 'South Bayan', 1.750, 1.250, 0.000 ),
+					array( "\xd8\xad\xd9\x88\xd9\x84\xd9\x8a", 'Hawalli', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd9\x85\xd9\x8a\xd8\xab\xd9\x8a\xd8\xa9", 'Rumaithiya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xb3\xd9\x84\xd9\x88\xd9\x89", 'Salwa', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb4\xd8\xb9\xd8\xa8", 'Sha\'ab', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa8\xd9\x8a\xd8\xa7\xd9\x86", 'Bayan', 1.750, 1.000, 0.000, 0.000 ),
+					array( "\xd9\x85\xd8\xb4\xd8\xb1\xd9\x81", 'Mishref', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xac\xd8\xa7\xd8\xa8\xd8\xb1\xd9\x8a\xd8\xa9", 'Jabriya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb3\xd8\xa7\xd9\x84\xd9\x85\xd9\x8a\xd8\xa9", 'Salmiya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd8\xa3\xd9\x8a", 'Ar-Rai', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd9\x85\xd9\x8a\xd8\xaf\xd8\xa7\xd9\x86 \xd8\xad\xd9\x88\xd9\x84\xd9\x8a", 'Hawalli Square', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa8\xd9\x8a\xd8\xa7\xd9\x86 \xd8\xa7\xd9\x84\xd8\xac\xd9\x86\xd9\x88\xd8\xa8\xd9\x8a\xd8\xa9", 'South Bayan', 1.750, 1.250, 0.000, 0.000 ),
 				),
 			),
 			array(
 				'ar'    => "\xd8\xa7\xd9\x84\xd9\x81\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86\xd9\x8a\xd8\xa9",
 				'en'    => 'Al-Farwaniyah',
 				'areas' => array(
-					array( "\xd8\xa7\xd9\x84\xd9\x81\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86\xd9\x8a\xd8\xa9", 'Farwaniya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xa7\xd8\xb1\xd8\xb6\xd9\x8a\xd8\xa9", 'Ardhiya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd8\xa7\xd8\xa8\xd9\x8a\xd8\xa9", 'Rabiya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xae\xd9\x8a\xd8\xb7\xd8\xa7\xd9\x86", 'Khaitan', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd8\xba\xd8\xa9", 'Regai', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa3\xd8\xa8\xd9\x88 \xd9\x81\xd8\xb7\xd9\x8a\xd8\xb1\xd8\xa9", 'Abu Futaira', 1.750, 1.250, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd9\x85\xd8\xb1\xd9\x8a\xd8\xa9", 'Omairiya', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xa3\xd9\x86\xd8\xaf\xd9\x84\xd8\xb3", 'Andalus', 1.500, 1.000, 0.000 ),
-					array( "\xd8\xac\xd9\x84\xd9\x8a\xd8\xa8 \xd8\xa7\xd9\x84\xd8\xb4\xd9\x8a\xd9\x88\xd8\xae", 'Jleeb Al-Shuyoukh', 1.750, 1.250, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb6\xd8\xac\xd9\x8a\xd8\xac", 'Dhajej', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xa8\xd8\xa7\xd8\xb3\xd9\x8a\xd8\xa9", 'Abbasiya', 1.500, 1.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86\xd9\x8a\xd8\xa9", 'Farwaniya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xa7\xd8\xb1\xd8\xb6\xd9\x8a\xd8\xa9", 'Ardhiya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd8\xa7\xd8\xa8\xd9\x8a\xd8\xa9", 'Rabiya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xae\xd9\x8a\xd8\xb7\xd8\xa7\xd9\x86", 'Khaitan', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd8\xba\xd8\xa9", 'Regai', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa3\xd8\xa8\xd9\x88 \xd9\x81\xd8\xb7\xd9\x8a\xd8\xb1\xd8\xa9", 'Abu Futaira', 1.750, 1.250, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd9\x85\xd8\xb1\xd9\x8a\xd8\xa9", 'Omairiya', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xa3\xd9\x86\xd8\xaf\xd9\x84\xd8\xb3", 'Andalus', 1.500, 1.000, 0.000, 0.000 ),
+					array( "\xd8\xac\xd9\x84\xd9\x8a\xd8\xa8 \xd8\xa7\xd9\x84\xd8\xb4\xd9\x8a\xd9\x88\xd8\xae", 'Jleeb Al-Shuyoukh', 1.750, 1.250, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb6\xd8\xac\xd9\x8a\xd8\xac", 'Dhajej', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd8\xa8\xd8\xa7\xd8\xb3\xd9\x8a\xd8\xa9", 'Abbasiya', 1.500, 1.000, 0.000, 0.000 ),
 				),
 			),
 			array(
 				'ar'    => "\xd8\xa7\xd9\x84\xd8\xa3\xd8\xad\xd9\x85\xd8\xaf\xd9\x8a",
 				'en'    => 'Ahmadi',
 				'areas' => array(
-					array( "\xd8\xa7\xd9\x84\xd8\xa3\xd8\xad\xd9\x85\xd8\xaf\xd9\x8a", 'Ahmadi', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa3\xd8\xa8\xd9\x88 \xd8\xad\xd9\x84\xd9\x8a\xd9\x81\xd8\xa9", 'Abu Halifa', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x81\xd9\x86\xd8\xb7\xd8\xa7\xd8\xb3", 'Fintaas', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x85\xd9\x87\xd8\xa8\xd9\x88\xd9\x84\xd8\xa9", 'Mahboula', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd8\xa8\xd8\xa7\xd8\xad\xd9\x8a\xd8\xa9", 'Sabahiya', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd9\x82\xd9\x8a\xd9\x84\xd8\xa9", 'Aqila', 2.250, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd9\x82\xd8\xb9\xd9\x8a", 'Ruqai', 2.250, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x81\xd8\xad\xd9\x8a\xd8\xad\xd9\x8a\xd9\x84", 'Fahaheel', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x85\xd9\x86\xd9\x82\xd9\x81", 'Mangaf', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x88\xd9\x81\xd8\xb1\xd8\xa9", 'Wafra', 3.000, 2.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb2\xd9\x88\xd8\xb1", 'Zour', 3.500, 2.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xae\xd9\x8a\xd8\xb1\xd8\xa7\xd9\x86", 'Khairan', 4.000, 3.000, 5.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xa3\xd8\xad\xd9\x85\xd8\xaf\xd9\x8a", 'Ahmadi', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa3\xd8\xa8\xd9\x88 \xd8\xad\xd9\x84\xd9\x8a\xd9\x81\xd8\xa9", 'Abu Halifa', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd9\x86\xd8\xb7\xd8\xa7\xd8\xb3", 'Fintaas', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x85\xd9\x87\xd8\xa8\xd9\x88\xd9\x84\xd8\xa9", 'Mahboula', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd8\xa8\xd8\xa7\xd8\xad\xd9\x8a\xd8\xa9", 'Sabahiya', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd9\x82\xd9\x8a\xd9\x84\xd8\xa9", 'Aqila', 2.250, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb1\xd9\x82\xd8\xb9\xd9\x8a", 'Ruqai', 2.250, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd8\xad\xd9\x8a\xd8\xad\xd9\x8a\xd9\x84", 'Fahaheel', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x85\xd9\x86\xd9\x82\xd9\x81", 'Mangaf', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x88\xd9\x81\xd8\xb1\xd8\xa9", 'Wafra', 3.000, 2.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb2\xd9\x88\xd8\xb1", 'Zour', 3.500, 2.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xae\xd9\x8a\xd8\xb1\xd8\xa7\xd9\x86", 'Khairan', 4.000, 3.000, 5.000, 0.000 ),
 				),
 			),
 			array(
 				'ar'    => "\xd8\xa7\xd9\x84\xd8\xac\xd9\x87\xd8\xb1\xd8\xa7\xd8\xa1",
 				'en'    => 'Al-Jahra',
 				'areas' => array(
-					array( "\xd8\xa7\xd9\x84\xd8\xac\xd9\x87\xd8\xb1\xd8\xa7\xd8\xa1", 'Jahra', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd9\x8a\xd9\x88\xd9\x86", 'Uyun', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x82\xd8\xb5\xd8\xb1", 'Qasr', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb3\xd9\x84\xd8\xa8\xd9\x8a\xd8\xa9", 'Sulaibiya', 2.250, 1.500, 0.000 ),
-					array( "\xd8\xaa\xd9\x8a\xd9\x85\xd8\xa7\xd8\xa1", 'Tayma', 2.500, 2.000, 0.000 ),
-					array( "\xd9\x83\xd8\xa7\xd8\xb8\xd9\x85\xd8\xa9", 'Kadhima', 2.500, 2.000, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x88\xd8\xa7\xd8\xad\xd8\xa9", 'Waha', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x86\xd8\xb9\xd9\x8a\xd9\x85", 'Naeem', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x82\xd9\x8a\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86", 'Qairawan', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd9\x84\xd9\x8a\xd8\xa8\xd9\x8a\xd8\xae\xd8\xa7\xd8\xaa", 'Sulaibikhat', 2.500, 2.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xac\xd9\x87\xd8\xb1\xd8\xa7\xd8\xa1", 'Jahra', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb9\xd9\x8a\xd9\x88\xd9\x86", 'Uyun', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x82\xd8\xb5\xd8\xb1", 'Qasr', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb3\xd9\x84\xd8\xa8\xd9\x8a\xd8\xa9", 'Sulaibiya', 2.250, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xaa\xd9\x8a\xd9\x85\xd8\xa7\xd8\xa1", 'Tayma', 2.500, 2.000, 0.000, 0.000 ),
+					array( "\xd9\x83\xd8\xa7\xd8\xb8\xd9\x85\xd8\xa9", 'Kadhima', 2.500, 2.000, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x88\xd8\xa7\xd8\xad\xd8\xa9", 'Waha', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x86\xd8\xb9\xd9\x8a\xd9\x85", 'Naeem', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x82\xd9\x8a\xd8\xb1\xd9\x88\xd8\xa7\xd9\x86", 'Qairawan', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd9\x84\xd9\x8a\xd8\xa8\xd9\x8a\xd8\xae\xd8\xa7\xd8\xaa", 'Sulaibikhat', 2.500, 2.000, 0.000, 0.000 ),
 				),
 			),
 			array(
 				'ar'    => "\xd9\x85\xd8\xa8\xd8\xa7\xd8\xb1\xd9\x83 \xd8\xa7\xd9\x84\xd9\x83\xd8\xa8\xd9\x8a\xd8\xb1",
 				'en'    => 'Mubarak Al-Kabeer',
 				'areas' => array(
-					array( "\xd9\x85\xd8\xa8\xd8\xa7\xd8\xb1\xd9\x83 \xd8\xa7\xd9\x84\xd9\x83\xd8\xa8\xd9\x8a\xd8\xb1", 'Mubarak Al-Kabeer', 1.750, 1.250, 0.000 ),
-					array( "\xd8\xa3\xd8\xa8\xd9\x88 \xd8\xa7\xd9\x84\xd8\xad\xd8\xb5\xd8\xa7\xd9\x86\xd9\x8a\xd8\xa9", 'Abu Hasaniya', 1.750, 1.250, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x82\xd8\xb5\xd9\x88\xd8\xb1", 'Qusor', 1.750, 1.250, 0.000 ),
-					array( "\xd8\xb5\xd8\xa8\xd8\xad\xd8\xa7\xd9\x86", 'Subhan', 1.750, 1.250, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x81\xd9\x86\xd9\x8a\xd8\xb7\xd9\x8a\xd8\xb3", 'Fintas', 1.750, 1.250, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd9\x85\xd8\xb3\xd9\x8a\xd9\x84\xd8\xa9", 'Masaeel', 2.000, 1.500, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd8\xaf\xd9\x8a\xd9\x82", 'Siddeeq', 1.750, 1.250, 0.000 ),
-					array( "\xd8\xa7\xd9\x84\xd8\xa8\xd9\x8a\xd8\xaa\xd8\xa7\xd8\xa1", 'Baitah', 1.750, 1.250, 0.000 ),
+					array( "\xd9\x85\xd8\xa8\xd8\xa7\xd8\xb1\xd9\x83 \xd8\xa7\xd9\x84\xd9\x83\xd8\xa8\xd9\x8a\xd8\xb1", 'Mubarak Al-Kabeer', 1.750, 1.250, 0.000, 0.000 ),
+					array( "\xd8\xa3\xd8\xa8\xd9\x88 \xd8\xa7\xd9\x84\xd8\xad\xd8\xb5\xd8\xa7\xd9\x86\xd9\x8a\xd8\xa9", 'Abu Hasaniya', 1.750, 1.250, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x82\xd8\xb5\xd9\x88\xd8\xb1", 'Qusor', 1.750, 1.250, 0.000, 0.000 ),
+					array( "\xd8\xb5\xd8\xa8\xd8\xad\xd8\xa7\xd9\x86", 'Subhan', 1.750, 1.250, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x81\xd9\x86\xd9\x8a\xd8\xb7\xd9\x8a\xd8\xb3", 'Fintas', 1.750, 1.250, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd9\x85\xd8\xb3\xd9\x8a\xd9\x84\xd8\xa9", 'Masaeel', 2.000, 1.500, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xb5\xd8\xaf\xd9\x8a\xd9\x82", 'Siddeeq', 1.750, 1.250, 0.000, 0.000 ),
+					array( "\xd8\xa7\xd9\x84\xd8\xa8\xd9\x8a\xd8\xaa\xd8\xa7\xd8\xa1", 'Baitah', 1.750, 1.250, 0.000, 0.000 ),
 				),
 			),
 		);
@@ -243,18 +286,19 @@ class KDM_Database {
 				$wpdb->insert(
 					$areas_table,
 					array(
-						'city_id'        => $city_id,
-						'area_name'      => $area_name,
-						'is_active'      => 1,
-						'sorting'        => $area_sort++,
-						'delivery_price' => (float) $area[2],
-						'express_fee'    => (float) $area[3],
-						'delivery_notes' => null,
-						'minimum_order'  => (float) $area[4],
-						'created_at'     => $now,
-						'updated_at'     => $now,
+						'city_id'            => $city_id,
+						'area_name'          => $area_name,
+						'is_active'          => 1,
+						'sorting'            => $area_sort++,
+						'delivery_price'     => (float) $area[2],
+						'express_fee'        => (float) $area[3],
+						'delivery_notes'     => null,
+						'minimum_order'      => (float) $area[4],
+						'free_minimum_order' => (float) $area[5],
+						'created_at'         => $now,
+						'updated_at'         => $now,
 					),
-					array( '%d', '%s', '%d', '%d', '%f', '%f', '%s', '%f', '%s', '%s' )
+					array( '%d', '%s', '%d', '%d', '%f', '%f', '%s', '%f', '%f', '%s', '%s' )
 				);
 			}
 		}

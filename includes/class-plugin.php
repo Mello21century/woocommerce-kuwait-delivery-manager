@@ -16,6 +16,9 @@ class KDM_Plugin {
 	 * Boots all plugin components.
 	 */
 	public function init(): void {
+		// Run pending DB migrations early (before any DB reads).
+		KDM_Database::maybe_upgrade();
+
 		// i18n — always loaded first.
 		new KDM_I18n();
 
@@ -29,20 +32,6 @@ class KDM_Plugin {
 		// Checkout integration (needs WooCommerce).
 		if ( class_exists( 'WooCommerce' ) ) {
 			new KDM_Checkout();
-		}
-
-		add_action( 'admin_init', array( $this, 'maybe_upgrade_db' ) );
-	}
-
-	/**
-	 * Runs DB schema creation when stored version is behind.
-	 */
-	public function maybe_upgrade_db(): void {
-		$installed_version = get_option( 'kdm_db_version', '0' );
-
-		if ( version_compare( $installed_version, KDM_DB_VERSION, '<' ) ) {
-			KDM_Database::create_tables();
-			update_option( 'kdm_db_version', KDM_DB_VERSION );
 		}
 	}
 

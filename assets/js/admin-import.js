@@ -141,31 +141,30 @@ var KDMImport = {
                 + this.escHtml(options[i].label) + '</option>';
         }
 
-        var html = '<tr>'
+        return '<tr>'
             + '<td>' + this.escHtml(header) + '</td>'
             + '<td><select class="kdm-mapping-select" data-col="' + index + '">'
             + optionsHtml
             + '</select></td>'
             + '<td><code>' + this.escHtml(previewValue) + '</code></td>'
             + '</tr>';
-
-        return html;
     },
 
     getMappingOptions: function () {
         var s = kdmImportData.strings;
         var opts = [
-            { value: '',            label: s.skipColumn },
-            { value: 'name_en',     label: s.nameEn },
-            { value: 'name_ar',     label: s.nameAr }
+            {value: '', label: s.skipColumn},
+            {value: 'name_en', label: s.nameEn},
+            {value: 'name_ar', label: s.nameAr}
         ];
 
         if (this.importType === 'areas') {
-            opts.push({ value: 'delivery_price',  label: s.deliveryPrice });
-            opts.push({ value: 'express_fee',     label: s.expressFee });
-            opts.push({ value: 'delivery_notes',  label: s.deliveryNotes });
-            opts.push({ value: 'minimum_order',   label: s.minimumOrder });
-            opts.push({ value: 'city_ref',        label: s.cityRef });
+            opts.push({value: 'delivery_price', label: s.deliveryPrice});
+            opts.push({value: 'express_fee', label: s.expressFee});
+            opts.push({value: 'delivery_notes', label: s.deliveryNotes});
+            opts.push({value: 'minimum_order', label: s.minimumOrder});
+            opts.push({value: 'free_minimum_order', label: s.freeMinimumOrder});
+            opts.push({value: 'city_ref', label: s.cityRef});
         }
 
         return opts;
@@ -211,15 +210,16 @@ var KDMImport = {
         var mapping = this.collectMapping();
 
         var postData = {
-            action:              'kdm_import_execute',
-            nonce:               kdmImportData.nonce,
-            country_iso2:        jQuery('#kdm-import-country').val(),
-            import_type:         this.importType,
-            column_mapping:      JSON.stringify(mapping),
+            action: 'kdm_import_execute',
+            nonce: kdmImportData.nonce,
+            country_iso2: jQuery('#kdm-import-country').val(),
+            import_type: this.importType,
+            column_mapping: JSON.stringify(mapping),
             base_delivery_price: jQuery('#kdm-base-price').val() || '',
-            base_express_fee:    jQuery('#kdm-base-express').val() || '',
-            base_minimum_order:  jQuery('#kdm-base-minimum').val() || '',
-            city_resolve_mode:   jQuery('#kdm-city-resolve-mode').val() || ''
+            base_express_fee: jQuery('#kdm-base-express').val() || '',
+            base_minimum_order: jQuery('#kdm-base-minimum').val() || '',
+            base_free_minimum_order: jQuery('#kdm-base-free-minimum').val() || '',
+            city_resolve_mode: jQuery('#kdm-city-resolve-mode').val() || ''
         };
 
         var $btn = jQuery('#kdm-import-execute-btn');
@@ -254,8 +254,8 @@ var KDMImport = {
 
         jQuery('#kdm-mapping-body select').each(function () {
             var $select = jQuery(this);
-            var field   = $select.val();
-            var colIdx  = $select.data('col');
+            var field = $select.val();
+            var colIdx = $select.data('col');
 
             if (field) {
                 mapping[colIdx] = field;
